@@ -1,0 +1,4 @@
+﻿  main.cpp
+d:\data\git\logicgates\logicgates\logicgates\main.cpp(7): warning C4101: age: neodkazovaná lokální proměnná
+  LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.exe
+  LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.pdb (Partial PDB)
