@@ -146,6 +146,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="gates.h" />
+    <ClInclude Include="workbench.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="gates.cpp" />
+    <ClCompile Include="workbench.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
