@@ -30,7 +30,7 @@ private:
 
 class Gate {
 public:
-	Gate(size_t inputSize, size_t ouputSize);
+	Gate(size_t inputSize, size_t outputSize);
 	virtual ~Gate();
 	virtual void Update() = 0;
 	bool Evaluated;
@@ -49,6 +49,7 @@ public:
 protected:
 	std::vector<std::unique_ptr<Signal>> output;
 	std::vector<Signal *> input;
+	size_t input_size; 
 	//Logging info
 	size_t id; 
 	string name; 
@@ -57,11 +58,12 @@ protected:
 class InputGate : public Gate
 {
 public:
-	InputGate();
+	InputGate(); 
 	~InputGate();
 	void Set(Status s);
 	void Update() override;
 };
+
 
 class OutputGate : public Gate
 {

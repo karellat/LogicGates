@@ -10,7 +10,9 @@ Workbench::Workbench()
 	
 }
 
-  std::vector<std::string>  Workbench::ListOfFreeInputGates()
+
+
+std::vector<std::string>  Workbench::ListOfFreeInputGates()
 {
 	 StatusCheck(UnderConstruction);
 	std::vector<std::string> output; 
@@ -81,7 +83,7 @@ bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t&
 bool Workbench::Add(const std::size_t& num)
 {
 	if (StandardGate.size() + UserDefinedGates.size() <= num)
-		throw new runtime_error("Argument of adding out of index");
+		throw new runtime_error("Argument of gate adding out of index");
 	
 	unique_ptr<Gate> added;
 	//Standard Gate addition
@@ -134,6 +136,7 @@ bool Workbench::Add(const std::size_t& num)
 		FreeOutputPins.push_back(added.get());
 
 	Gates.push_back(std::move(added));
+	return true;
 }
 
 
