@@ -41,11 +41,17 @@ public:
 	virtual bool ReconnectOutput(size_t numOfPin, Gate * Out);
 	size_t GetLengthOfInput();
 	size_t GetLengthOfOutput();
-	size_t GetLengthOfFreeInputs();
-	size_t GetLengthOfFreeOutputs();
+	size_t GetLengthOfFreeInputs() { return 0; }
+	size_t GetLengthOfFreeOutputs() { return 0; }
+	//Logging info 
+	const size_t Id() { return id; };
+	const string Name() { return name; };
 protected:
 	std::vector<std::unique_ptr<Signal>> output;
 	std::vector<Signal *> input;
+	//Logging info
+	size_t id; 
+	string name; 
 };
 
 class InputGate : public Gate
@@ -54,6 +60,7 @@ public:
 	InputGate();
 	~InputGate();
 	void Set(Status s);
+	void Update() override;
 };
 
 class OutputGate : public Gate
@@ -61,21 +68,32 @@ class OutputGate : public Gate
 	OutputGate();
 	~OutputGate();
 	inline Status Read() { return status; }
+	void Update()override;
 };
 
-class BlankGate : public OutputGate
+class BlankGate : public Gate
 {
-
+public:
+	BlankGate(); 
+	~BlankGate();
+	void Update() override;
 };
 
 class ConstGate0 : public InputGate
 {
+public: 
+	ConstGate0();
+	~ConstGate0();
+	void Update() override;
 
 };
 
 class ConstGate1 : public InputGate
 {
-
+public: 
+	ConstGate1();
+	~ConstGate1(); 
+	void Update() override;
 };
 
 class NotGate : public Gate
@@ -89,6 +107,7 @@ public:
 
 class OrGate : public Gate
 {
+public: 
 	OrGate();
 	~OrGate();
 	void Update() override;

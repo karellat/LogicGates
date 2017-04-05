@@ -16,8 +16,6 @@ public:
 
 	Workbench();
 	~Workbench();
-	//Copy constructor
-	//
 
 	WorkbenchStatus status = UnderConstruction;
 
@@ -26,8 +24,8 @@ public:
 	std::vector<std::string> ListOfFreeOutputGates();
 	std::vector<std::string> ListOfUserDefinedGates();
 	std::vector<std::string> ListOfStandartGates();
-	std::size_t SizeOfInput();
-	std::size_t SizeOfOutput();
+	std::size_t SizeOfInput() const;
+	std::size_t SizeOfOutput() const;
 	//Actions while constructing
 	bool Connect(const std::size_t & freeInputPosition, const std::size_t & freeOutputPosition);
 	bool Add(const std::size_t & num);
@@ -39,7 +37,6 @@ public:
 	bool SetInput(std::vector<bool> input);
 	std::vector<bool> ReadOutput();
 	bool ConstructUserGate();
-	void ErrorBuffer(const std::size_t & numOfError);
 
 
 protected:
@@ -50,10 +47,22 @@ protected:
 	std::vector<std::unique_ptr<UserDefinedGate>>   UserDefinedGates;
 	std::vector <std::unique_ptr<Gate>> Gates;
 	bool TestOfCorrection();
-
+	std::vector<string> StandardGate;
+	void StatusCheck(WorkbenchStatus s) const;
 
 };
 
+
+inline  std::vector<std::string> Workbench::ListOfStandartGates() 
+{
+	return StandardGate;
+}
+
+class WorkbenchStatusException : public runtime_error
+{
+public:
+	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) :runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation require " + to_string(wantedStatus)){}
+};
 class WorkbenchTUI
 {
 public:
@@ -82,8 +91,7 @@ protected:
 	void SetInput();
 	void CheckCalculation();
 	void ReadOutput();
-	//Make specific errors 
-	std::string Error();
+	
 
 
 };
