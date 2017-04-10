@@ -20,40 +20,48 @@ public:
 	WorkbenchStatus status = UnderConstruction;
 
 	//Output
-	std::vector<std::string> ListOfFreeInputGates();
-	std::vector<std::string> ListOfFreeOutputGates();
-	std::vector<std::string> ListOfUserDefinedGates();
-	std::vector<std::string> ListOfStandartGates();
-	std::size_t SizeOfInput() const;
+	vector<string> ListOfFreeInputGates();
+	vector<string> ListOfFreeOutputGates();
+	vector<string> ListOfUserDefinedGates();
+	const vector<string> & ListOfStandartGates() const;
+	std::size_t SizeOfInput() const	;
 	std::size_t SizeOfOutput() const;
 	//Actions while constructing
-	bool Connect(const std::size_t & freeInputPosition, const std::size_t & freeOutputPosition);
+	bool Connect(const std::size_t & freeInputPosition,const std::size_t & freeInputID,
+		const std::size_t & freeOutputPosition, const std::size_t & freeOutputID);
 	bool Add(const std::size_t & num);
 	bool AddUserDefineGate(const std::size_t & positionInList);
 	bool ConstructBench();
 	bool AddInputGate();
 	bool AdddOutputGate();
 	//Actions while constructed
-	bool SetInput(std::vector<bool> input);
-	std::vector<bool> ReadOutput();
+	bool SetInput(vector<bool> input);
+	vector<bool> ReadOutput();
 	bool ConstructUserGate();
 
 
 protected:
-	std::vector<InputGate *> InputGates;
-	std::vector<OutputGate *>   OutputGates;
-	std::vector<Gate *>   FreeOutputPins;
-	std::vector<Gate *>   FreeInputPins;
-	std::vector<std::unique_ptr<UserDefinedGate>>   UserDefinedGates;
-	std::vector <std::unique_ptr<Gate>> Gates;
+	unique_ptr<Graph<Gate, Signal>> graph;
+	vector<gvertex> InputGates;
+	vector<gvertex>   OutputGates;
+	vector<gvertex>   freeOutputGates;
+	vector<gvertex>   freeInputGates; 
+	vector<unique_ptr<UserDefinedGate>> UserDefinedGates;
 	bool TestOfCorrection();
-	std::vector<string> StandardGate;
+	vector<string> StandardGate;
 	void StatusCheck(WorkbenchStatus s) const;
-
+	vector<std::size_t> freeInputPins(gvertex v); 
+	vector<std::size_t> freeOutputPins(gvertex v);
+	std::size_t GetNewID()
+	{
+		lastID++; 
+		return (lastID - 1); 
+	}
+	std::size_t lastID; 
 };
 
 
-inline  std::vector<std::string> Workbench::ListOfStandartGates() 
+inline const vector<string> & Workbench::ListOfStandartGates() const
 {
 	return StandardGate;
 }
@@ -67,19 +75,19 @@ class WorkbenchTUI
 {
 public:
 	WorkbenchTUI();
-	WorkbenchTUI(std::string outputFile, std::string inputFile);
-	WorkbenchTUI(std::string outputFile);
+	WorkbenchTUI(string outputFile, string inputFile);
+	WorkbenchTUI(string outputFile);
 	~WorkbenchTUI();
 	void Init();
 	void Start();
 
 protected:
-	std::unique_ptr<Workbench> actualWorkBench;
-	std::unique_ptr<std::ostringstream> output;
-	std::unique_ptr<std::istringstream> input;
-	std::string ListFreeOutputPins();
-	std::string ListFreeInputPins();
-	std::size_t ParseInput(std::string input);
+	unique_ptr<Workbench> actualWorkBench;
+	unique_ptr<ostringstream> output;
+	unique_ptr<istringstream> input;
+	string ListFreeOutputPins();
+	string ListFreeInputPins();
+	std::size_t ParseInput(string input);
 	// While workbench underconstruction 
 	void CreateNewSignal();
 	void CreateNewGate();
@@ -91,7 +99,4 @@ protected:
 	void SetInput();
 	void CheckCalculation();
 	void ReadOutput();
-	
-
-
 };

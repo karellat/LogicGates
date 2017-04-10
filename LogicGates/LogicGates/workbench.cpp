@@ -2,6 +2,7 @@
 #include <string>
 Workbench::Workbench()
 {
+	newID = 0; 
 	std::string s[] = { "Not","And","Or","Xor","Nand","Nor","Xnor", "Blank","Const 1", "Const 0" };
 	for (auto i : s)
 	{
@@ -10,86 +11,69 @@ Workbench::Workbench()
 	
 }
 
-
-
-std::vector<std::string>  Workbench::ListOfFreeInputGates()
+Workbench::~Workbench()
 {
-	 StatusCheck(UnderConstruction);
-	std::vector<std::string> output; 
-	for (auto i : FreeInputPins)
-	{
-		output.push_back(i->Id() + " - " + i->Name() + "(" + std::to_string(i->GetLengthOfFreeInputs()) + ")"); 
-	}
-	return output;
 }
 
- std::vector<std::string>  Workbench::ListOfFreeOutputGates()
+std::vector<std::string> Workbench::ListOfFreeInputGates()
 {
-	StatusCheck(UnderConstruction);
-	std::vector<std::string> output; 
-	for (auto i : FreeOutputPins)
+	std::vector<string> o;
+	for ( gvertex  i : freeInputGates)
 	{
-		output.push_back(i->Id() + " - " + i->Name() + "(" + std::to_string(i->GetLengthOfFreeOutputs()) + ")");
+		string name = i->value->Name() + " " + std::to_string(i->value->Id());
+		vector<std::size_t> freePins = freeInputPins(i);
+		name += " (";
+		for (auto j : freePins)
+	    {
+			name += std::to_string(j) + ","; 
+ 	    }
+		name += ")"; 
+
+		o.push_back(name);
 	}
-	return output;
+	return o; 
+}
+
+std::vector<std::string> Workbench::ListOfFreeOutputGates()
+{
+	std::vector<string> o;
+	for (gvertex i : freeOutputGates)
+	{
+		string name = i->value->Name() + " " + std::to_string(i->value->Id());
+		vector<std::size_t> freePins = freeOutputPins(i);
+		name += " (";
+		for (auto j : freePins)
+		{
+			name += std::to_string(j) + ",";
+		}
+		name += ")";
+		o.push_back(name);
+	}
+	return o;
 }
 
 std::vector<std::string> Workbench::ListOfUserDefinedGates()
 {
-	StatusCheck(UnderConstruction);
-	std::vector<std::string> output;
-	for (std::size_t i = 0; i < UserDefinedGates.size();i++)
+	std::vector<std::string> o; 
+	for (auto && i : UserDefinedGates)
 	{
-		output.push_back(UserDefinedGates[i]->Id() + " - " + UserDefinedGates[i]->Name() + "(" + std::to_string(UserDefinedGates[i]->GetLengthOfFreeOutputs()) + ")");
+		o.push_back(i->Name() +  " " + std::to_string(i->Id()));
 	}
-	return output;
+	return o;
 }
 
-std::size_t Workbench::SizeOfInput() const
-{
-	return FreeInputPins.size();
-}
-
-std::size_t Workbench::SizeOfOutput() const
-{
-	return FreeOutputPins.size(); 
-}
-
-bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t& freeOutputPosition)
-{
-
-	
-	StatusCheck(UnderConstruction);
-	//Check arguments 
-	if (freeInputPosition < 0 || freeInputPosition >= FreeInputPins.size() ||
-		freeOutputPosition < 0 || freeOutputPosition >= FreeOutputPins.size())
-		throw new runtime_error("Index out of connecting gates"); 
-	
-	//test arguments 
-	if(FreeOutputPins[freeOutputPosition]->ConnectOutput(FreeInputPins[freeInputPosition]))
-	{
-		FreeOutputPins.erase(FreeOutputPins.begin() + freeOutputPosition);
-		FreeInputPins.erase(FreeInputPins.begin() + freeInputPosition);
-		return true; 
-	}
-	else
-	{
-		return false;
-	}
-
-
-}
 
 bool Workbench::Add(const std::size_t& num)
 {
+	StatusCheck(UnderConstruction);
+	
 	if (StandardGate.size() + UserDefinedGates.size() <= num)
 		throw new runtime_error("Argument of gate adding out of index");
 	
-	unique_ptr<Gate> added;
+	unique_ptr<Gate> added; 
 	//Standard Gate addition
     if(StandardGate.size() > num)
     {
-		
 	    switch (num)
 	    {
 		case 0:
@@ -121,6 +105,8 @@ bool Workbench::Add(const std::size_t& num)
 			break; 
 		case 9: 
 			added = make_unique<ConstGate0>(ConstGate0());
+	    default: 
+	    	throw new runtime_error("Unknown adding situation, index i = " + std::to_string(num) + " out of index");
 	    }
     }
 	//User Gate addition 
@@ -129,14 +115,8 @@ bool Workbench::Add(const std::size_t& num)
 		
 	}
 
-	//Mark inputs and outpus
-	if (added->GetLengthOfFreeInputs() > 0)
-		FreeInputPins.push_back(added.get());
-	if (added->GetLengthOfFreeOutputs() > 0)
-		FreeOutputPins.push_back(added.get());
 
-	Gates.push_back(std::move(added));
-	return true;
+
 }
 
 
@@ -145,3 +125,4 @@ void Workbench::StatusCheck(WorkbenchStatus s) const
 	if (status != s)
 		throw new WorkbenchStatusException(status, s);
 }
+
