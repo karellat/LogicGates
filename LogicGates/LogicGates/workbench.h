@@ -46,10 +46,11 @@ protected:
 	vector<gvertex>   OutputGates;
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates; 
-	vector<unique_ptr<UserDefinedGate>> UserDefinedGates;
+	vector<unique_ptr<UserDefinedGateModel>> UserDefinedGates;
 	bool TestOfCorrection();
 	vector<string> StandardGate;
 	void StatusCheck(WorkbenchStatus s) const;
+	void StatusCheck(vector<WorkbenchStatus> s) const;
 	vector<std::size_t> freeInputPins(gvertex v); 
 	vector<std::size_t> freeOutputPins(gvertex v);
 	std::size_t GetNewID()
@@ -69,7 +70,11 @@ inline const vector<string> & Workbench::ListOfStandartGates() const
 class WorkbenchStatusException : public runtime_error
 {
 public:
-	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) :runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation require " + to_string(wantedStatus)){}
+	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) 
+	:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires " + to_string(wantedStatus)){}	
+	//TODO: Something more explicit
+	WorkbenchStatusException(WorkbenchStatus actualStatus)
+		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
 };
 class WorkbenchTUI
 {

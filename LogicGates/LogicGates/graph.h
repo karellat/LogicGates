@@ -11,10 +11,9 @@ struct Vertex {
 	Vertex(VertexValue v) : value(v) {}
 };
 
-template <typename VertexValue, typename EdgeValue>
+template <typename VertexValue,typename EdgeValue>
 struct Edge {
 	using vtype = Vertex<VertexValue>;
-
 	vtype* from;
 	vtype* to;
 	EdgeValue value;
@@ -25,7 +24,7 @@ struct Edge {
 template <typename VertexValue, typename EdgeValue>
 struct Graph {
 	using vtype = Vertex<VertexValue>;
-	using etype = Edge<VertexValue, EdgeValue>;
+	using etype = Edge<VertexValue,EdgeValue>;
 
 	vector<unique_ptr<vtype>> vertices;
 	vector<unique_ptr<etype>> edges;
@@ -37,8 +36,8 @@ struct Graph {
 		return last.get();
 	}
 
-	etype* connect(vtype* a, vtype* b, EdgeValue value) {
-		edges.push_back(make_unique<etype>(a, b, value));
+	etype* connect(vtype* from, vtype* to, EdgeValue value) {
+		edges.push_back(make_unique<etype>(from, to, value));
 		auto&& last = edges.back();
 		return last.get();
 	}

@@ -1,5 +1,8 @@
 #include "workbench.h"
 #include <string>
+#include <atomic>
+#include <set>
+
 Workbench::Workbench() : lastID(0)
 {
 
@@ -157,6 +160,13 @@ bool Workbench::AddUserDefineGate(const std::size_t& positionInList)
 
 bool Workbench::ConstructBench()
 {
+	if (TestOfCorrection())
+	{
+		status = Constructed; 
+		return true; 
+	}
+	else
+		return false; 
 }
 
 bool Workbench::AddInputGate()
@@ -176,10 +186,103 @@ bool Workbench::AdddOutputGate()
 	return true; 
 }
 
+bool Workbench::SetInput(vector<bool> input)
+{
+	std::size_t tacts = 0; 
+	//TODO: CHECK 
+	StatusCheck(Constructed);
+	if (input.size() != InputGates.size())
+		throw new runtime_error("input vector does not fit input size");
+
+	set<gvertex> following_tact_gates; 
+	for (std::size_t i=1; i < InputGates.size(); i++)
+	{
+		gvertex v = InputGates[i]; 
+		vector<gedge> edges = graph->edges_from(v);
+		for(auto e : edges)
+		{
+			following_tact_gates.insert(e->to);
+			if (input[i])
+				e->value->status = One;
+			else
+				e->value->status = Zero; 
+		}
+		set<gvertex> actual_tact_gates = following_tact_gates;
+		following_tact_gates.clear;
+		while (all_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return o_g->value->result;}))
+		{
+			for(auto av : actual_tact_gates)
+			{
+				vector<gedge> input_edges = graph->edges_to(v); 
+				vector<bool> input; 
+				bool notFinished = false;
+				input.resize(av->value->GetLengthOfInput(), false);
+				for (auto e : input_edges)
+				{
+					if (e->value->status == Floating)
+					{
+						notFinished = true;
+						break;
+					}
+					else if (e->value->status == One)
+						input[e->value->toID] = true;
+					else
+						input[e->value->toID] = false;
+				}
+				if (notFinished) continue; 
+
+				vector<bool> output = av->value->Update(input); 
+				vector<gedge> output_edges = graph->edges_from(v);
+				for(auto i : output_edges)
+				{
+					if (output[i->value->fromID])
+						i->value->status = One;
+					else
+						i->value->status = Zero; 
+					following_tact_gates.insert(i->to);
+				}
+
+			}
+			actual_tact_gates = following_tact_gates;
+			tacts++; 
+		}
+	}
+	status = Calculated;
+	return true; 
+}
+
+vector<bool> Workbench::ReadOutput()
+{
+	StatusCheck(Calculated);
+	vector<bool> o; 
+	for (auto i : OutputGates)
+		o.push_back(i->value->resultValues[0]);
+	return o; 
+}
+
+
+bool Workbench::TestOfCorrection()
+{
+	//TODO: infinit loop test, correction of output
+	if (InputGates.size() == 0 || OutputGates.size() == 0 ||
+		freeOutputGates.size() != 0 || freeInputGates.size() != 0)
+		return false; 
+	else return true; 
+}
 
 void Workbench::StatusCheck(WorkbenchStatus s) const
 {
 	if (status != s)
 		throw new WorkbenchStatusException(status, s);
+}
+
+void Workbench::StatusCheck(vector<WorkbenchStatus> s) const
+{
+	for (auto i : s)
+	{
+		if (i == status)
+			return;
+	}
+	throw  new WorkbenchStatusException(status);
 }
 

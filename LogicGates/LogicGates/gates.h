@@ -8,7 +8,7 @@ using namespace std;
 class Gate;
 class Signal; 
 using gvertex = Vertex<unique_ptr<Gate>>*;
-using gedge = Edge<Gate*,unique_ptr<Signal>>*; 
+using gedge = Edge<unique_ptr<Gate>,unique_ptr<Signal>>*; 
 enum Status
 {
 	Zero, One, Floating
@@ -39,6 +39,8 @@ public:
 	//Logging info 
 	size_t Id() const { return id; };
 	string Name() const { return name; };
+	bool result; 
+	vector<bool> resultValues; 
 protected:
 	//std::vector<std::unique_ptr<Signal>> output;
 	size_t input_size; 
@@ -64,6 +66,7 @@ public:
 	OutputGate(size_t ID);
 	~OutputGate();
 	vector<bool> Update(vector<bool> input) override;
+	Status result; 
 };
 
 class BlankGate : public Gate
