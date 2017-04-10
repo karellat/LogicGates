@@ -24,8 +24,8 @@ public:
 	vector<string> ListOfFreeOutputGates();
 	vector<string> ListOfUserDefinedGates();
 	const vector<string> & ListOfStandartGates() const;
-	std::size_t SizeOfInput() const	;
-	std::size_t SizeOfOutput() const;
+	std::size_t SizeOfInput() const { return InputGates.size(); }
+	std::size_t SizeOfOutput() const { return OutputGates.size(); }
 	//Actions while constructing
 	bool Connect(const std::size_t & freeInputPosition,const std::size_t & freeInputID,
 		const std::size_t & freeOutputPosition, const std::size_t & freeOutputID);
@@ -41,8 +41,8 @@ public:
 
 
 protected:
-	unique_ptr<Graph<Gate, Signal>> graph;
-	vector<gvertex> InputGates;
+	unique_ptr<Graph<unique_ptr<Gate>, unique_ptr<Signal>>> graph;
+	vector<gvertex>   InputGates;
 	vector<gvertex>   OutputGates;
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates; 
