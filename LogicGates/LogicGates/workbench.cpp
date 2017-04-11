@@ -2,6 +2,7 @@
 #include <string>
 #include <atomic>
 #include <set>
+#include <numeric>
 
 Workbench::Workbench() : lastID(0)
 {
@@ -261,6 +262,18 @@ vector<bool> Workbench::ReadOutput()
 }
 
 
+
+bool Workbench::ConstructUserGate(string name)
+{
+	//TODO:check constructed too
+	StatusCheck(Calculated);
+	unique_ptr<UserDefinedGateModel> model = 
+		make_unique<UserDefinedGateModel>(UserDefinedGateModel(std::move(graph), InputGates, OutputGates,name,GetNewID()));
+	UserDefinedGates.push_back(std::move(model));
+	return true; 
+}
+
+
 bool Workbench::TestOfCorrection()
 {
 	//TODO: infinit loop test, correction of output
@@ -284,5 +297,33 @@ void Workbench::StatusCheck(vector<WorkbenchStatus> s) const
 			return;
 	}
 	throw  new WorkbenchStatusException(status);
+}
+
+vector<std::size_t> Workbench::freeInputPins(gvertex v) const
+{
+	vector<std::size_t> all_id;
+	all_id.resize(v->value->GetLengthOfInput()); 
+	std::iota(all_id.begin(), all_id.end(), 0);
+	vector<gedge> edges_to_v = graph->edges_to(v);
+	for(auto  e : edges_to_v)
+	{
+		all_id.erase(all_id.cbegin() + e->value->toID);
+	}
+
+	return all_id; 
+}
+
+vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
+{
+	vector<std::size_t> all_id;
+	all_id.resize(v->value->GetLengthOfOutput());
+	std::iota(all_id.begin(), all_id.end(), 0);
+	vector<gedge> edges_from_v = graph->edges_from(v);
+	for (auto e : edges_from_v)
+	{
+		all_id.erase(all_id.cbegin() + e->value->toID);
+	}
+
+	return all_id;
 }
 
