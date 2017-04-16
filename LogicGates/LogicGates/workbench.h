@@ -1,8 +1,6 @@
 #pragma once
 #include "gates.h"
-#include <queue>
 #include <memory>
-#include <tuple>
 #include <sstream>
 #include <list>
 
@@ -37,7 +35,7 @@ public:
 	//Actions while constructed
 	bool SetInput(vector<bool> input);
 	vector<bool> ReadOutput();
-	bool ConstructUserGate();
+	bool ConstructUserGate(string name);
 
 
 protected:
@@ -51,8 +49,8 @@ protected:
 	vector<string> StandardGate;
 	void StatusCheck(WorkbenchStatus s) const;
 	void StatusCheck(vector<WorkbenchStatus> s) const;
-	vector<std::size_t> freeInputPins(gvertex v); 
-	vector<std::size_t> freeOutputPins(gvertex v);
+	vector<std::size_t> freeInputPins(gvertex v) const; 
+	vector<std::size_t> freeOutputPins(gvertex v) const;
 	std::size_t GetNewID()
 	{
 		lastID++; 
@@ -76,32 +74,33 @@ public:
 	WorkbenchStatusException(WorkbenchStatus actualStatus)
 		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
 };
-class WorkbenchTUI
-{
-public:
-	WorkbenchTUI();
-	WorkbenchTUI(string outputFile, string inputFile);
-	WorkbenchTUI(string outputFile);
-	~WorkbenchTUI();
-	void Init();
-	void Start();
 
-protected:
-	unique_ptr<Workbench> actualWorkBench;
-	unique_ptr<ostringstream> output;
-	unique_ptr<istringstream> input;
-	string ListFreeOutputPins();
-	string ListFreeInputPins();
-	std::size_t ParseInput(string input);
-	// While workbench underconstruction 
-	void CreateNewSignal();
-	void CreateNewGate();
-	void CreateUserDefinedGate();
-	void ConnectFreeInput();
-	void ConnectFreeOutput();
-	void Construct();
-	//While workbench Constructed
-	void SetInput();
-	void CheckCalculation();
-	void ReadOutput();
-};
+//class WorkbenchTUI
+//{
+//public:
+//	WorkbenchTUI();
+//	WorkbenchTUI(string outputFile, string inputFile);
+//	WorkbenchTUI(string outputFile);
+//	~WorkbenchTUI();
+//	void Init();
+//	void Start();
+//
+//protected:
+//	unique_ptr<Workbench> actualWorkBench;
+//	unique_ptr<ostringstream> output;
+//	unique_ptr<istringstream> input;
+//	string ListFreeOutputPins();
+//	string ListFreeInputPins();
+//	std::size_t ParseInput(string input);
+//	// While workbench underconstruction 
+//	void CreateNewSignal();
+//	void CreateNewGate();
+//	void CreateUserDefinedGate();
+//	void ConnectFreeInput();
+//	void ConnectFreeOutput();
+//	void Construct();
+//	//While workbench Constructed
+//	void SetInput();
+//	void CheckCalculation();
+//	void ReadOutput();
+//};

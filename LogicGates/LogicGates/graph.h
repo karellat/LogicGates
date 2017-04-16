@@ -8,7 +8,7 @@ using namespace std;
 template <typename VertexValue>
 struct Vertex {
 	VertexValue value;
-	Vertex(VertexValue v) : value(v) {}
+	Vertex(VertexValue v) : value(std::move(v)) {}
 };
 
 template <typename VertexValue,typename EdgeValue>
@@ -18,7 +18,7 @@ struct Edge {
 	vtype* to;
 	EdgeValue value;
 
-	Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(value) {}
+	Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(std::move(value)) {}
 };
 
 template <typename VertexValue, typename EdgeValue>
@@ -31,13 +31,13 @@ struct Graph {
 
 
 	vtype * add_vertex(VertexValue value) {
-		vertices.push_back(make_unique<vtype>(value));
+		vertices.push_back(make_unique<vtype>(std::move(value)));
 		auto&& last = vertices.back();
 		return last.get();
 	}
 
 	etype* connect(vtype* from, vtype* to, EdgeValue value) {
-		edges.push_back(make_unique<etype>(from, to, value));
+		edges.push_back(make_unique<etype>(from, to,std::move(value)));
 		auto&& last = edges.back();
 		return last.get();
 	}

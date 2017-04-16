@@ -18,7 +18,7 @@ class Signal
 {
 public:
 	Signal(Status s, size_t to_id, size_t from_id) : status(s), toID(to_id), fromID(from_id) {}; 
-	~Signal();
+	~Signal(){}
 	Status status;
 	size_t toID;
 	size_t fromID;
@@ -31,8 +31,11 @@ private:
 class Gate {
 public:
 	Gate(size_t inputSize, size_t outputSize, string name, size_t id) 
-	: input_size(inputSize), output_size(outputSize), id(id),name(name) {}
-	virtual ~Gate();
+	: input_size(inputSize), output_size(outputSize), id(id),name(name),result(false)
+	{
+		resultValues.resize(outputSize);
+	}
+	virtual ~Gate(){}
 	virtual vector<bool> Update(vector<bool> input) = 0; 
 	size_t GetLengthOfInput() const { return input_size; }
 	size_t GetLengthOfOutput() const { return output_size; }
@@ -53,118 +56,175 @@ protected:
 class InputGate : public Gate
 {
 public:
-	InputGate(size_t ID); 
-	~InputGate();
-	void Set(Status s);
-	vector<bool> Update(vector<bool> input) override; 
+	InputGate(size_t ID) : Gate(0, 1, "Input Gate", ID){}
+	~InputGate() {}
+	void Set(Status s)
+	{
+		result = true;
+		if (s == One) resultValues[0] = true;
+		else if (s == Zero) resultValues[0] = false;
+		else result = false;
+	}
+	vector<bool> Update(vector<bool> input) override
+	{
+		result = true; 
+		resultValues = input; 
+		return input;
+	}
 };
 
 
 class OutputGate : public Gate
 {
 public:
-	OutputGate(size_t ID);
-	~OutputGate();
-	vector<bool> Update(vector<bool> input) override;
-	Status result; 
+	OutputGate(size_t ID) : Gate(1,0,"Output Gate",ID){}
+	~OutputGate(){}
+	vector<bool> Update(vector<bool> input) override 
+	{ 
+		result = true; 
+		resultValues = input; 
+		return input; 
+	}
 };
 
 class BlankGate : public Gate
 {
 public:
-	BlankGate(size_t ID); 
-	~BlankGate();
-	vector<bool> Update(vector<bool> input) override;
+	BlankGate(size_t ID) : Gate(1, 0, "Blank Gate", ID) {}
+	~BlankGate(){}
+	vector<bool> Update(vector<bool> input) override
+	{
+		return input; 
+	}
 };
 
 class ConstGate0 : public InputGate
 {
-public: 
-	ConstGate0(size_t ID);
-	~ConstGate0();
-	vector<bool> Update(vector<bool> input) override;
+public:
+	ConstGate0(size_t ID) : InputGate(ID)
+	{
+		result = true;
+		resultValues[0] = false; 
+	}
+	~ConstGate0(){}
+	vector<bool> Update(vector<bool> input) override { return resultValues; }
 
 };
 
 class ConstGate1 : public InputGate
 {
 public: 
-	ConstGate1(size_t ID );
-	~ConstGate1(); 
-	vector<bool> Update(vector<bool> input) override;
+	ConstGate1(size_t ID) : InputGate(ID) { result = true; resultValues[0] = true; }
+	~ConstGate1(){}
+	vector<bool> Update(vector<bool> input) override { return resultValues; }
 };
 
 class NotGate : public Gate
 {
 public:
-	NotGate(size_t ID);
-	~NotGate();
-	vector<bool> Update(vector<bool> input) override;
+	NotGate(size_t ID) : Gate(1,1,"Not Gate", ID){} 
+	~NotGate(){}
+	vector<bool> Update(vector<bool> input) override 
+	{ 
+		result = true; 
+		resultValues[0] = !input[0];
+		return resultValues; 
+	}
 
 };
 
 class OrGate : public Gate
 {
 public: 
-	OrGate(size_t ID);
-	~OrGate();
-	vector<bool> Update(vector<bool> input) override;
+	OrGate(size_t ID) : Gate(2,1,"Or Gate", ID) {} 
+	~OrGate(){}
+	vector<bool> Update(vector<bool> input) override
+	{
+		result = true; 
+		resultValues[0] = input[0] || input[1];
+		return resultValues; 
+	}
 };
 
 class AndGate : public Gate
 {
 public:
-	AndGate(size_t ID);
-	~AndGate();
-	vector<bool> Update(vector<bool> input) override;
+	AndGate(size_t ID) : Gate(2,1,"And Gate",ID) {} 
+	~AndGate(){}
+	vector<bool> Update(vector<bool> input) override
+	{
+		result = true; 
+		resultValues[0] = input[0] && input[1]; 
+		return resultValues; 
+	}
 };
 
 class XorGate : public Gate
 {
 public:
-	XorGate(size_t ID);
-	~XorGate();
-	vector<bool> Update(vector<bool> input) override;
+	XorGate(size_t ID) : Gate(2,1,"Xor Gate",ID) {} 
+	~XorGate(){}
+	vector<bool> Update(vector<bool> input) override {
+		result = true; 
+		resultValues[0] = (input[0] || input[1]) && !(input[0] && input[1]);
+		return resultValues; 
+	}
 };
 
 class NandGate : public Gate
 {
 public:
-	NandGate(size_t ID);
-	~NandGate();
-	vector<bool> Update(vector<bool> input) override;
+	NandGate(size_t ID) : Gate(2,1,"Nand Gate",ID) {} 
+	~NandGate(){}
+	vector<bool> Update(vector<bool> input) override 
+	{
+		result = true; 
+		resultValues[0] = !(input[0] && input[1]);
+		return resultValues; 
+	}
 };
 
 class NorGate : public Gate
 {
-public:  NorGate(size_t ID);
-		 ~NorGate();
-		 vector<bool> Update(vector<bool> input) override;
+public:  NorGate(size_t ID) : Gate(2,1,"Nor Gate",ID) {} 
+		 ~NorGate(){}
+		 vector<bool> Update(vector<bool> input) override
+		 {
+			 result = true; 
+			 resultValues[0] = !(input[0] && input[1]);
+			 return resultValues; 
+		 }
 };
 
 class XnorGate : public Gate
 {
-public: XnorGate(size_t ID);
-		~XnorGate();
-		vector<bool> Update(vector<bool> input) override;
+public: XnorGate(size_t ID):Gate(2,1,"Xnor Gate",ID){}
+		~XnorGate(){}
+		vector<bool> Update(vector<bool> input) override
+		{
+			result = true; 
+			resultValues[0] = !((input[0] || input[1]) && !(input[0] && input[1])); 
+			return resultValues; 
+		}
 
 };
 
 class UserDefinedGate : public Gate
 {
 public:
-	UserDefinedGate(); 
-	~UserDefinedGate();
+	UserDefinedGate(size_t input_size, size_t output_size,string name, size_t id): Gate(input_size,output_size,name, id){}
+	~UserDefinedGate() {}
 
-	vector<bool> Update(vector<bool> input) override;
+	vector<bool> Update(vector<bool> input) override { throw new runtime_error("Not Implemented yet, UserDefinedGate::Update"); }
 };
 
 class UserDefinedGateModel : public Gate
 {
 public: 
-	UserDefinedGateModel(Graph<unique_ptr<Gate>, unique_ptr<Signal>> graph, vector<gvertex> InputGates, vector<gvertex> OutputGates, string name, size_t id);
-	~UserDefinedGateModel(); 
+	UserDefinedGateModel(unique_ptr<Graph<unique_ptr<Gate>, unique_ptr<Signal>>> graph, vector<gvertex> InputGates, vector<gvertex> OutputGates, string name, size_t id)
+		: Gate(InputGates.size(), OutputGates.size(),name,id) {}
+	~UserDefinedGateModel() {throw new runtime_error("Not Implemented yet, UserDefinedGate::destructor"); }
 
-	unique_ptr<UserDefinedGate> getGate(size_t id);
-	vector<bool> Update(vector<bool> input) override;
+	unique_ptr<UserDefinedGate> getGate(size_t id) { throw new runtime_error("Not Implemented yet, UserDefinedGateModel::getGate"); }
+	vector<bool> Update(vector<bool> input) override { throw new runtime_error("Not Implemented yet, UserDefinedGateModel::Update"); }
 };

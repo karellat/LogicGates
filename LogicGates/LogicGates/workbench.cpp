@@ -6,13 +6,14 @@
 
 Workbench::Workbench() : lastID(0)
 {
-
+	graph = make_unique<Graph<unique_ptr<Gate>, unique_ptr<Signal>>>(Graph<unique_ptr<Gate>,unique_ptr<Signal>>()); 
 	std::string s[] = { "Not","And","Or","Xor","Nand","Nor","Xnor", "Blank","Const 1", "Const 0" };
 	for (auto i : s)
 	{
 		StandardGate.push_back(i);
 	}
 	
+
 }
 
 Workbench::~Workbench()
@@ -87,7 +88,11 @@ bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t&
 		return false; 
 	unique_ptr<Signal> s = make_unique<Signal>(Signal(Floating, freeInputID, freeOutputID));
 	graph->connect(from, to, std::move(s));
-
+	free_id_from = freeOutputPins(from);
+	free_id_to = freeInputPins(to);
+	if (free_id_from.size() == 0) freeOutputGates.erase(freeOutputGates.begin() + freeOutputPosition);
+	if (free_id_to.size() == 0)   freeInputGates.erase(freeInputGates.begin() + freeInputPosition);
+	
 	return true; 
 }
 
@@ -176,6 +181,7 @@ bool Workbench::AddInputGate()
 	unique_ptr<Gate> i = make_unique<InputGate>(InputGate(GetNewID()));
 	gvertex v = graph->add_vertex(std::move(i));
 	InputGates.push_back(v);
+	freeOutputGates.push_back(v);
 	return true; 
 }
 
@@ -184,6 +190,7 @@ bool Workbench::AdddOutputGate()
 	unique_ptr<Gate> o = make_unique<OutputGate>(OutputGate(GetNewID()));
 	gvertex v = graph->add_vertex(std::move(o));
 	OutputGates.push_back(v);
+	freeInputGates.push_back(v);
 	return true; 
 }
 
@@ -209,7 +216,7 @@ bool Workbench::SetInput(vector<bool> input)
 				e->value->status = Zero; 
 		}
 		set<gvertex> actual_tact_gates = following_tact_gates;
-		following_tact_gates.clear;
+		following_tact_gates.clear();
 		while (all_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return o_g->value->result;}))
 		{
 			for(auto av : actual_tact_gates)
