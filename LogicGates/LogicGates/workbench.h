@@ -36,6 +36,7 @@ public:
 	bool SetInput(vector<bool> input);
 	vector<bool> ReadOutput();
 	bool ConstructUserGate(string name);
+	vector<string> ListAllGates(); 
 
 
 protected:

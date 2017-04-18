@@ -8,34 +8,39 @@ using namespace std;
 
 static void WriteStringVector(vector<string> list)
 {
-	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl; });
+	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl << endl; });
 }
 int main()
 {
 	std::string blank;
 
-	unique_ptr<Workbench> workbench(new Workbench()); 
+	unique_ptr<Workbench> workbench = make_unique<Workbench>();
 
 	workbench->AddInputGate();
-	workbench->AdddOutputGate(); 
-	cout << "Standart gates" << endl; 
-	WriteStringVector(workbench->ListOfStandartGates());
-	cout << "FreeOutputGates" << endl;
-	WriteStringVector(workbench->ListOfFreeOutputGates());
-
-	cout << "FreeInputGates" << endl; 
-	WriteStringVector(workbench->ListOfFreeInputGates());
+	workbench->Add(0);
 
 	workbench->Connect(0, 0, 0, 0);
-	cout << "FreeOutputGates" << endl;
-	WriteStringVector(workbench->ListOfFreeOutputGates());
+	workbench->AdddOutputGate(); 
+	workbench->Connect(0, 0, 0, 0);
+	workbench->AddInputGate();
+	workbench->Add(1);
+	workbench->Connect(0, 0, 0, 0);
+	workbench->AddInputGate();
+	workbench->Connect(0, 1, 1, 0);
+	workbench->AdddOutputGate();
+	workbench->Connect(0, 0, 0, 0);
 
+	workbench->ConstructBench();
+
+	workbench->SetInput({ true,true,true });
+	for( auto i : workbench->ReadOutput())
+	{
+		cout << i << endl; 
+	}
+
+	cout << endl; 
 	
-	cout << "FreeInputGates" << endl;
-	WriteStringVector(workbench->ListOfFreeInputGates()); 
-
-
-	cout << "Logic Gates";
+	
 	getline(cin, blank);
 }
 

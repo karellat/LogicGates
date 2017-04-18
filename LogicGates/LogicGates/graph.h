@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 #include <queue>
+
 using namespace std;
 
 template <typename VertexValue>
@@ -82,6 +83,8 @@ struct Graph {
 		}
 		return nullptr; 
 	}
+
+
 };
 
 

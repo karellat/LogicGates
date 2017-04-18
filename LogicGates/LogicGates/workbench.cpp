@@ -3,6 +3,7 @@
 #include <atomic>
 #include <set>
 #include <numeric>
+#include <iterator>
 
 Workbench::Workbench() : lastID(0)
 {
@@ -25,12 +26,14 @@ std::vector<std::string> Workbench::ListOfFreeInputGates()
 	std::vector<string> o;
 	for ( gvertex  i : freeInputGates)
 	{
-		string name = i->value->Name() + " " + std::to_string(i->value->Id());
+		string name = i->value->Name() + " ID: " + std::to_string(i->value->Id());
 		vector<std::size_t> freePins = freeInputPins(i);
-		name += " (";
-		for (auto j : freePins)
+		name += " Free Pins: (";
+		for (std::size_t j=0; j<freePins.size(); j++)
 	    {
-			name += std::to_string(j) + ","; 
+			
+			name += std::to_string(freePins[j]); 
+			if (j != freePins.size() - 1) name += ",";
  	    }
 		name += ")"; 
 
@@ -44,12 +47,14 @@ std::vector<std::string> Workbench::ListOfFreeOutputGates()
 	std::vector<string> o;
 	for (gvertex i : freeOutputGates)
 	{
-		string name = i->value->Name() + " " + std::to_string(i->value->Id());
+		string name = i->value->Name() + " ID: " + std::to_string(i->value->Id());
 		vector<std::size_t> freePins = freeOutputPins(i);
-		name += " (";
-		for (auto j : freePins)
+		name += " Free Pins: (";
+		for (std::size_t j = 0; j<freePins.size(); j++)
 		{
-			name += std::to_string(j) + ",";
+
+			name += std::to_string(freePins[j]);
+			if (j != freePins.size() - 1) name += ",";
 		}
 		name += ")";
 		o.push_back(name);
@@ -100,7 +105,7 @@ bool Workbench::Add(const std::size_t& num)
 {
 	StatusCheck(UnderConstruction);
 	
-	if (StandardGate.size() >= num)
+	if (StandardGate.size() <= num)
 		throw new runtime_error("Argument of gate adding out of index");
 	
 	unique_ptr<Gate> added; 
@@ -203,25 +208,26 @@ bool Workbench::SetInput(vector<bool> input)
 		throw new runtime_error("input vector does not fit input size");
 
 	set<gvertex> following_tact_gates; 
-	for (std::size_t i=1; i < InputGates.size(); i++)
+	for (std::size_t i = 0; i < InputGates.size(); i++)
 	{
-		gvertex v = InputGates[i]; 
+		gvertex v = InputGates[i];
 		vector<gedge> edges = graph->edges_from(v);
-		for(auto e : edges)
+		for (auto e : edges)
 		{
 			following_tact_gates.insert(e->to);
 			if (input[i])
 				e->value->status = One;
 			else
-				e->value->status = Zero; 
+				e->value->status = Zero;
 		}
+	}
 		set<gvertex> actual_tact_gates = following_tact_gates;
 		following_tact_gates.clear();
-		while (all_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return o_g->value->result;}))
+		while (any_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return !(o_g->value->result);}))
 		{
 			for(auto av : actual_tact_gates)
 			{
-				vector<gedge> input_edges = graph->edges_to(v); 
+				vector<gedge> input_edges = graph->edges_to(av); 
 				vector<bool> input; 
 				bool notFinished = false;
 				input.resize(av->value->GetLengthOfInput(), false);
@@ -240,21 +246,21 @@ bool Workbench::SetInput(vector<bool> input)
 				if (notFinished) continue; 
 
 				vector<bool> output = av->value->Update(input); 
-				vector<gedge> output_edges = graph->edges_from(v);
-				for(auto i : output_edges)
+				vector<gedge> output_edges = graph->edges_from(av);
+				for(auto oe : output_edges)
 				{
-					if (output[i->value->fromID])
-						i->value->status = One;
+					if (output[oe->value->fromID])
+						oe->value->status = One;
 					else
-						i->value->status = Zero; 
-					following_tact_gates.insert(i->to);
+						oe->value->status = Zero; 
+					following_tact_gates.insert(oe->to);
 				}
 
 			}
 			actual_tact_gates = following_tact_gates;
 			tacts++; 
 		}
-	}
+	
 	status = Calculated;
 	return true; 
 }
@@ -278,6 +284,31 @@ bool Workbench::ConstructUserGate(string name)
 		make_unique<UserDefinedGateModel>(UserDefinedGateModel(std::move(graph), InputGates, OutputGates,name,GetNewID()));
 	UserDefinedGates.push_back(std::move(model));
 	return true; 
+}
+
+vector<string> Workbench::ListAllGates()
+{
+	vector<string> output; 
+	for (auto && v : graph->vertices)
+	{
+		string gate = "ID: " + std::to_string(v->value->Id()) + " Name: " + v->value->Name();
+		gate += "\n InputSize: " + std::to_string(v->value->GetLengthOfInput()) + " OutputSize: " + std::to_string(v->value->GetLengthOfOutput()); 
+		gate += "\n Input Edges: "; 
+		for(auto i : graph->edges_to(v.get()))
+		{
+			gate += "\n\t from pin " + std::to_string(i->value->fromID) + " (" + i->from->value->Name() + ", ID: " + std::to_string(i->from->value->Id()) +
+				")  ---------> to pin " +  std::to_string(i->value->toID);
+		}
+		/*gate += "\n Output Edges: ";
+		for(auto i : graph->edges_from(v.get()))
+		{
+			gate += "\n\t from pin " + std::to_string(i->value->fromID) + " ---------> to pin " + std::to_string(i->value->toID) +
+				" (" + i->to->value->Name() + ", ID: " + std::to_string(i->to->value->Id()) + ")";
+		}
+*/
+		output.push_back(gate);
+	}
+	return output;
 }
 
 
@@ -311,13 +342,14 @@ vector<std::size_t> Workbench::freeInputPins(gvertex v) const
 	vector<std::size_t> all_id;
 	all_id.resize(v->value->GetLengthOfInput()); 
 	std::iota(all_id.begin(), all_id.end(), 0);
-	vector<gedge> edges_to_v = graph->edges_to(v);
-	for(auto  e : edges_to_v)
-	{
-		all_id.erase(all_id.cbegin() + e->value->toID);
-	}
-
-	return all_id; 
+	vector<gedge> edges_to = graph->edges_to(v);
+	vector<std::size_t> connected_id;
+	connected_id.resize(edges_to.size());
+	std::transform(edges_to.begin(), edges_to.end(), connected_id.begin(), [](gedge v) {return v->value->toID; });
+	vector<std::size_t> output; 
+	output.resize(all_id.size() - connected_id.size());
+	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output,output.begin()));
+	return output;
 }
 
 vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
@@ -325,12 +357,14 @@ vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
 	vector<std::size_t> all_id;
 	all_id.resize(v->value->GetLengthOfOutput());
 	std::iota(all_id.begin(), all_id.end(), 0);
-	vector<gedge> edges_from_v = graph->edges_from(v);
-	for (auto e : edges_from_v)
-	{
-		all_id.erase(all_id.cbegin() + e->value->toID);
-	}
+	vector<gedge> edges_from = graph->edges_from(v);
+	vector<std::size_t> connected_id;
+	connected_id.resize(edges_from.size());
+	std::transform(edges_from.begin(), edges_from.end(), connected_id.begin(), [](gedge v) {return v->value->fromID; });
+	vector<std::size_t> output;
+	output.resize(all_id.size() - connected_id.size());
+	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), output.begin());
+	return output;
 
-	return all_id;
 }
 

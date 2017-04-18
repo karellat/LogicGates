@@ -30,8 +30,9 @@ private:
 
 class Gate {
 public:
+	Gate(){}
 	Gate(size_t inputSize, size_t outputSize, string name, size_t id) 
-	: input_size(inputSize), output_size(outputSize), id(id),name(name),result(false)
+	: result(false), input_size(inputSize), output_size(outputSize),id(id),name(name)
 	{
 		resultValues.resize(outputSize);
 	}
