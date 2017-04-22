@@ -4,6 +4,7 @@
 #include <set>
 #include <numeric>
 #include <iterator>
+#include <locale>
 
 Workbench::Workbench() : lastID(0)
 {
@@ -367,4 +368,114 @@ vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
 	return output;
 
 }
+//WORKBENCHTUI
 
+WorkbenchTUI::~WorkbenchTUI()
+{
+}
+
+void WorkbenchTUI::WaitForFile()
+{
+}
+
+bool WorkbenchTUI::ReadFile(string path)
+{
+	string line; 
+	OpenFile(path);
+	//Read name and check input tag
+	getline(inputFile, line);
+	vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
+	
+	if(tokens.size() != 2)
+	{
+		output << "Wrong format, definition line" << endl;
+		return false; 
+	}
+
+	string tag = ToUpper(tokens[0]);
+	string gate_name = tokens[1];
+	if(tag != definitionTag)
+	{
+		output << line << std::endl << "incorrect definition tag format" << endl; 
+		return false; 
+	}
+	
+	if (!nameSizeCheck(gate_name.size())) return false;
+	if (!nameCharsCheck(gate_name)) return false;
+	gate_name.resize(gate_name.size());
+	gate_name = ToUpper(gate_name);
+	
+	output << gate_name;
+	
+}
+
+void WorkbenchTUI::InteraktiveMode()
+{
+}
+
+bool WorkbenchTUI::OpenFile(std::string path)
+{
+	string s = "\tOpening file " + path;
+	output << s << endl;
+	inputFile.open(path);
+	if (inputFile.is_open())
+	{
+		return true;
+	}
+	else
+	{
+		output << "\tUnable to open file" << std::endl;
+		return false;
+	}
+}
+
+
+bool WorkbenchTUI::nameSizeCheck(string name)
+{
+	return nameSizeCheck(name.size());
+}
+
+bool WorkbenchTUI::nameSizeCheck(std::size_t size)
+{
+	if (size > maxSizeOfTag)
+	{
+		output << "Gate name is too long (" + to_string(size) + ")" + " max=" + std::to_string(maxSizeOfTag) << endl;
+		return false; 
+	}
+	return true;
+}
+
+bool WorkbenchTUI::nameCharsCheck(string name)
+{
+	if (any_of(name.begin(), name.end(), [this](char c){
+		return any_of(forbidenChars.begin(), forbidenChars.end(),
+			[c](char  fc) { return fc == c; });
+	}))
+	{
+		output << "Name contains one of the forbidden chars ";
+		return false; 
+	}
+	else return true;
+
+}
+
+std::vector<string> WorkbenchTUI::Split(string s, char delimeter, StringSplitOption option)
+{
+	vector<string> tokens; 
+	string token;
+	istringstream in(s);
+	while(getline(in,token,delimeter))
+	{
+		if(token != "" || option == None )
+			tokens.push_back(token);
+	}
+	return tokens; 
+}
+
+std::string WorkbenchTUI::ToUpper(std::string s)
+{
+	string o; 
+	o.resize(s.size());
+	std::transform(s.begin(), s.end(), o.begin(), toupper);
+	return o;
+}

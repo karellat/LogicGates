@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <memory>
 #include "workbench.h"
+#include  <cstring>
 using namespace std;
 
 
@@ -10,34 +12,22 @@ static void WriteStringVector(vector<string> list)
 {
 	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl << endl; });
 }
-int main()
+int main(int argc, char *argv[])
 {
 	std::string blank;
-
-	unique_ptr<Workbench> workbench = make_unique<Workbench>();
-
-	workbench->AddInputGate();
-	workbench->Add(0);
-
-	workbench->Connect(0, 0, 0, 0);
-	workbench->AdddOutputGate(); 
-	workbench->Connect(0, 0, 0, 0);
-	workbench->AddInputGate();
-	workbench->Add(1);
-	workbench->Connect(0, 0, 0, 0);
-	workbench->AddInputGate();
-	workbench->Connect(0, 1, 1, 0);
-	workbench->AdddOutputGate();
-	workbench->Connect(0, 0, 0, 0);
-
-	workbench->ConstructBench();
-
-	workbench->SetInput({ true,true,true });
-	for( auto i : workbench->ReadOutput())
+	string path = argv[0];
+	std::size_t  b = path.find_last_of('\\');
+	path.erase(b,path.size()-1);
+	
+	
+	
+	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf());
+	if (argc == 2)
 	{
-		cout << i << endl; 
+		string file = argv[1];
+		w->ReadFile(path +'\\'+file);
 	}
-
+	else 
 	cout << endl; 
 	
 	

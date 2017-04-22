@@ -3,6 +3,7 @@
 #include <memory>
 #include <sstream>
 #include <list>
+#include <fstream>
 
 enum WorkbenchStatus
 {
@@ -62,7 +63,7 @@ protected:
 
 
 inline const vector<string> & Workbench::ListOfStandartGates() const
-{
+{ 
 	return StandardGate;
 }
 
@@ -76,32 +77,37 @@ public:
 		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
 };
 
-//class WorkbenchTUI
-//{
-//public:
-//	WorkbenchTUI();
-//	WorkbenchTUI(string outputFile, string inputFile);
-//	WorkbenchTUI(string outputFile);
-//	~WorkbenchTUI();
-//	void Init();
-//	void Start();
-//
-//protected:
-//	unique_ptr<Workbench> actualWorkBench;
-//	unique_ptr<ostringstream> output;
-//	unique_ptr<istringstream> input;
-//	string ListFreeOutputPins();
-//	string ListFreeInputPins();
-//	std::size_t ParseInput(string input);
-//	// While workbench underconstruction 
-//	void CreateNewSignal();
-//	void CreateNewGate();
-//	void CreateUserDefinedGate();
-//	void ConnectFreeInput();
-//	void ConnectFreeOutput();
-//	void Construct();
-//	//While workbench Constructed
-//	void SetInput();
-//	void CheckCalculation();
-//	void ReadOutput();
-//};
+
+
+class WorkbenchTUI
+{
+public:
+	WorkbenchTUI(streambuf* output, streambuf* input) : output(output),input(input)
+	{
+		workbench = make_unique<Workbench>();
+	}
+	~WorkbenchTUI();
+	void WaitForFile(); 
+	bool ReadFile(string path);
+	void InteraktiveMode();
+
+protected:
+	enum StringSplitOption
+	{
+		RemoveEmptyEntries,
+		None
+	};
+	std::vector<string> Split(std::string s,char delimeter, StringSplitOption option);
+	std::string ToUpper(std::string s);
+	std::ostream output; 
+	std::istream input;
+	std::ifstream inputFile;
+	std::unique_ptr<Workbench> workbench; 
+	bool nameSizeCheck(string name);
+	bool nameSizeCheck(std::size_t size);
+	bool nameCharsCheck(string name);
+	bool OpenFile(std::string path);
+	string definitionTag = "#GATE";
+	std::size_t maxSizeOfTag = 40;
+	std::string forbidenChars = "\n\t ";
+};

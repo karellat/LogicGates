@@ -4,6 +4,9 @@ d:\data\git\logicgates\logicgates\logicgates\gates.h(227): warning C4297: 'UserD
 d:\data\git\logicgates\logicgates\logicgates\gates.h(229): warning C4458: declaration of 'id' hides class member
   d:\data\git\logicgates\logicgates\logicgates\gates.h(53): note: see declaration of 'Gate::id'
 d:\data\git\logicgates\logicgates\logicgates\gates.h(229): warning C4100: 'id': unreferenced formal parameter
-d:\data\git\logicgates\logicgates\logicgates\main.cpp(9): warning C4505: 'WriteStringVector': unreferenced local function has been removed
+d:\data\git\logicgates\logicgates\logicgates\main.cpp(11): warning C4505: 'WriteStringVector': unreferenced local function has been removed
+  Generating Code...
+  Skipping... (no relevant changes detected)
+  workbench.cpp
   LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.exe
   LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.pdb (Partial PDB)
