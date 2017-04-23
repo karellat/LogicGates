@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <memory>
 #include "workbench.h"
-#include  <cstring>
 using namespace std;
 
 
@@ -22,10 +21,11 @@ int main(int argc, char *argv[])
 	
 	
 	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf());
-	if (argc == 2)
+	if (argc == 3)
 	{
+
 		string file = argv[1];
-		w->ReadFile(path +'\\'+file);
+		w->PassiveMode(path +'\\'+file, argv[2]);
 	}
 	else 
 	cout << endl; 

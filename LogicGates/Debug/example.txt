@@ -1,10 +1,12 @@
 #GATE	MyGate
 i0	INPUT
-i1	INPUT 
+i1	INPUT
+
 A	AND
 O	OUTPUT
-#
-i0[0] -> A[0]
-i1[0] -> A[1]
-A[0] -> O[1]
+
+#CONNECT
+A[0]	<-	i0[0]
+i1[0]	->	A[1]
+A[0]	->	O[0]
 #

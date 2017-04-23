@@ -1,12 +1,35 @@
-﻿  main.cpp
-d:\data\git\logicgates\logicgates\logicgates\gates.h(227): warning C4297: 'UserDefinedGateModel::~UserDefinedGateModel': function assumed not to throw an exception but does
-  d:\data\git\logicgates\logicgates\logicgates\gates.h(227): note: destructor or deallocator has a (possibly implicit) non-throwing exception specification
-d:\data\git\logicgates\logicgates\logicgates\gates.h(229): warning C4458: declaration of 'id' hides class member
+﻿  workbench.cpp
+d:\data\git\logicgates\logicgates\logicgates\gates.h(237): warning C4297: 'UserDefinedGateModel::~UserDefinedGateModel': function assumed not to throw an exception but does
+  d:\data\git\logicgates\logicgates\logicgates\gates.h(237): note: destructor or deallocator has a (possibly implicit) non-throwing exception specification
+d:\data\git\logicgates\logicgates\logicgates\gates.h(239): warning C4458: declaration of 'id' hides class member
   d:\data\git\logicgates\logicgates\logicgates\gates.h(53): note: see declaration of 'Gate::id'
-d:\data\git\logicgates\logicgates\logicgates\gates.h(229): warning C4100: 'id': unreferenced formal parameter
-d:\data\git\logicgates\logicgates\logicgates\main.cpp(11): warning C4505: 'WriteStringVector': unreferenced local function has been removed
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  workbench.cpp
+d:\data\git\logicgates\logicgates\logicgates\gates.h(239): warning C4100: 'id': unreferenced formal parameter
+d:\data\git\logicgates\logicgates\logicgates\workbench.cpp(307): warning C4457: declaration of 'input' hides function parameter
+  d:\data\git\logicgates\logicgates\logicgates\workbench.cpp(278): note: see declaration of 'input'
+d:\data\git\logicgates\logicgates\logicgates\workbench.cpp(732): warning C4458: declaration of 'input' hides class member
+  d:\data\git\logicgates\logicgates\logicgates\workbench.h(121): note: see declaration of 'WorkbenchTUI::input'
+c:\program files (x86)\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.10.25017\include\algorithm(946): warning C4244: '=': conversion from 'int' to 'char', possible loss of data
+  c:\program files (x86)\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.10.25017\include\algorithm(961): note: see reference to function template instantiation '_OutIt *std::_Transform_unchecked<char*,char*,int(__cdecl *)(int)>(_InIt,_InIt,_OutIt,_Fn1 &)' being compiled
+          with
+          [
+              _OutIt=char *,
+              _InIt=char *,
+              _Fn1=int (__cdecl *)(int)
+          ]
+  c:\program files (x86)\microsoft visual studio\2017\enterprise\vc\tools\msvc\14.10.25017\include\algorithm(971): note: see reference to function template instantiation '_OutIt std::_Transform_no_deprecate<_InIt,_OutIt,int(__cdecl *)(int)>(_InIt,_InIt,_OutIt,_Fn1 &)' being compiled
+          with
+          [
+              _OutIt=std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,
+              _InIt=std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,
+              _Fn1=int (__cdecl *)(int)
+          ]
+  d:\data\git\logicgates\logicgates\logicgates\workbench.cpp(811): note: see reference to function template instantiation '_OutIt std::transform<std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,int(__cdecl *)(int)>(_InIt,_InIt,_OutIt,_Fn1)' being compiled
+          with
+          [
+              _OutIt=std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,
+              _InIt=std::_String_iterator<std::_String_val<std::_Simple_types<char>>>,
+              _Fn1=int (__cdecl *)(int)
+          ]
+d:\data\git\logicgates\logicgates\logicgates\workbench.cpp(707): warning C4715: 'WorkbenchTUI::SetInput': not all control paths return a value
   LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.exe
   LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Debug\LogicGates.pdb (Partial PDB)
