@@ -1,0 +1,12 @@
+#Gate	MyGateName
+NameOfGate	Type 
+NameOfGate	Type 
+NameOfGate	Type 
+.
+.
+.
+#
+NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
+NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
+NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
+NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
