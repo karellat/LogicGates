@@ -45,6 +45,7 @@ public:
 	std::string Name() const { return name; };
 	bool result;
 	std::vector<bool> resultValues; 
+	void  Reset() { result = false; }
 protected:
 	//std::vector<std::unique_ptr<Signal>> output;
 	size_t input_size; 
@@ -218,6 +219,19 @@ public: XnorGate(size_t ID):Gate(2,1,"Xnor Gate",ID){}
 			return resultValues; 
 		}
 
+};
+
+class DoubleGate : public Gate
+{
+public: DoubleGate(size_t ID) :Gate(1,2,"Double Gate",ID){}
+		~DoubleGate(){}
+	std::vector<bool> Update(std::vector<bool> input) override
+	{
+		result = true; 
+		resultValues[0] = input[0];
+		resultValues[1] = input[0];
+		return resultValues;
+	}
 };
 
 class UserDefinedGate : public Gate

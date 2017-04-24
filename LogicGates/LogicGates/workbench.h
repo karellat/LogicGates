@@ -73,6 +73,7 @@ protected:
 	std::size_t lastID; 
 	std::unordered_map<string, gvertex> VertexNames;
 	std::unordered_map<string, int> TypeNames; 
+	void removeEmptyGatesFromList();
 
 	
 };
@@ -106,6 +107,7 @@ public:
 	void WaitForFile(); 
 	bool ReadFile(string path);
 	void InteraktiveMode();
+	void InteraktiveMode(string path);
 	void PassiveMode(string path,string inputSettings);
 protected:
 	enum StringSplitOption
@@ -113,6 +115,8 @@ protected:
 		RemoveEmptyEntries,
 		None
 	};
+	void InteractiveSeting();
+	bool InteractiveReadingFile();
 	bool SetInput(vector<bool> inputSettings);
 	bool ReadOutputs(vector<bool>& outputValue);
 	std::vector<string> Split(std::string s,char delimeter, StringSplitOption option);

@@ -5,8 +5,8 @@ using pin = std::pair<std::string, std::size_t>;
 Workbench::Workbench() : lastID(0)
 {
 	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>()); 
-	std::size_t s_size = 12;
-	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST 1", "CONST 0","INPUT","OUTPUT" };
+	std::size_t s_size = 13;
+	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST 1", "CONST 0","INPUT","OUTPUT","DOUBLE" };
 	for(size_t i = 0; i < s_size; i++)
 	{
 		StandardGate.push_back(s[i]);
@@ -123,9 +123,14 @@ bool Workbench::Connect(gvertex from, gvertex to, std::size_t fromPin, std::size
 	graph->connect(from, to, std::move(s));
 	free_id_from = freeOutputPins(from);
 	free_id_to = freeInputPins(to);
-	if (free_id_from.size() == 0) freeOutputGates.erase(freeOutputGates.begin() + fromPin);
-	if (free_id_to.size() == 0)   freeInputGates.erase(freeInputGates.begin() + toPin);
-
+	
+	if (free_id_from.size() == 0)
+	{
+		freeOutputGates.erase(std::remove_if(freeOutputGates.begin(), freeOutputGates.end(), [from](gvertex v) {return from == v; }),freeOutputGates.end());
+	}
+	if (free_id_to.size() == 0) {
+		freeInputGates.erase(std::remove_if(freeInputGates.begin(), freeInputGates.end(), [to](gvertex v) {return to == v; }),freeInputGates.end());
+	}
 	return true;
 }
 gvertex Workbench::Add(const std::size_t& num)
@@ -171,6 +176,9 @@ gvertex Workbench::Add(const std::size_t& num)
 			return AddInputGate();
 		case 11: 
 			return AddOutputGate();
+		case 12:
+			added = make_unique<DoubleGate>(DoubleGate(GetNewID()));
+			break;
 	    default: 
 	    	throw new runtime_error("Unknown adding situation, index num = " + std::to_string(num) + " out of index");
 	    }
@@ -277,9 +285,14 @@ gvertex Workbench::AddOutputGate()
 
 bool Workbench::SetInput(vector<bool> input)
 {
+	for (auto o : OutputGates)
+		o->value->Reset();
 	std::size_t tacts = 0; 
-	//TODO: CHECK 
-	StatusCheck(Constructed);
+	//TODO: CHECK
+	vector<WorkbenchStatus> statuses; 
+	statuses.push_back(Constructed);
+	statuses.push_back(Calculated);
+	StatusCheck(statuses);
 	if (input.size() != InputGates.size())
 		throw new runtime_error("input vector does not fit input size");
 
@@ -441,6 +454,8 @@ vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
 	return output;
 
 }
+
+
 
 ////////////////////////
 //WORKBENCHTUI
@@ -661,44 +676,25 @@ bool WorkbenchTUI::ReadFile(string path)
 void WorkbenchTUI::InteraktiveMode()
 
 {
-	string line;
-	output << "Insert path of input file: " << endl << "\t";
-	input >> line;
-	while(!ReadFile(line))
+	if(InteractiveReadingFile())
 	{
-		output << "Invalid name, insert path of correct input file: " << endl << "\t"; 
-		input >> line;
+		InteractiveSeting();
 	}
-	output << "Set input gates: \t";
-	input >> line;
-	vector<bool> in; 
-	while (!stringToBools(line,in))
+	else
 	{
-		output << "Wrong format of input, set input gates: \t";
-		input >> line;
+		output << "Exiting interactive mode" << endl;
 	}
-	while(true)
+}
+void WorkbenchTUI::InteraktiveMode(string path)
+{
+	if(ReadFile(path))
 	{
-		if (!SetInput(in)) {
-			while (!stringToBools(line, in))
-			{
-				output << "Set input gates: \t";
-				input >> line;
-			}
-		}
-		else
-		{
-			vector<bool> out;
-			string s;
-			ReadOutputs(out);
-			boolsToString(out, s);
-			output << "Outputs : " << s << endl;
-			output << "Set new input: \t";
-		}
+		InteractiveSeting();
 	}
-
-
-	
+	else
+	{
+		output << "Exiting interactive mode" << endl; 
+	}
 }
 
 void WorkbenchTUI::PassiveMode(string path, string inputString)
@@ -725,6 +721,73 @@ void WorkbenchTUI::PassiveMode(string path, string inputString)
 	output << "Application closed" << endl;
 
 
+}
+
+void WorkbenchTUI::InteractiveSeting()
+{
+	string line;
+	vector<bool> in;
+	vector<bool> out;
+	string s;
+	while (true)
+	{
+
+
+		string line;
+		output << "Set input: ";
+		input >> line;
+		if (line == "exit" || line == "q" || line == "quit" || line == "break")
+		{
+			output << "Exiting inputs setting" << endl;
+			return; 
+		}
+		if (stringToBools(line, in))
+		{
+			if (SetInput(in))
+			{
+				if (ReadOutputs(out))
+				{
+					boolsToString(out, s);
+					output << "Output : " << s << endl;
+				}
+			}
+			else
+			{
+				continue;
+			}
+		}
+		else
+		{
+			output << "Wrong format of input, ";
+			continue;
+		}
+	}
+}
+
+bool WorkbenchTUI::InteractiveReadingFile()
+{
+	string line;
+	output << "Insert path of input file: " << endl << "\t";
+
+	while (true)
+	{
+		input >> line;
+		if (line == "exit" || line == "q" || line == "quit" || line == "break")
+		{
+			output << "Exiting inputs setting" << endl;
+			return false;
+		}
+		
+		if (!ReadFile(line)) {
+			output << "Invalid name, insert path of correct input file: " << endl << "\t";
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	return true;
 }
 
 bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
@@ -856,6 +919,7 @@ std::string WorkbenchTUI::ToUpper(std::string s)
 
 bool WorkbenchTUI::boolsToString(std::vector<bool> v,string& s)
 {
+	s.clear();
 	transform(v.begin(), v.end(), std::inserter(s, s.begin()), [](bool c)
 	{
 		if (c) return '1'; else return '0';
@@ -866,6 +930,7 @@ bool WorkbenchTUI::boolsToString(std::vector<bool> v,string& s)
 
 bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
 {
+	b.clear();
 	try
 	{
 		transform(s.begin(), s.end(), std::inserter(b, b.begin()), [](char c)
