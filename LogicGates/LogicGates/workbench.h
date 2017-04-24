@@ -50,12 +50,15 @@ public:
 	vector<bool> ReadOutput();
 	bool ConstructUserGate(string name);
 	vector<string> ListAllGates(); 
-
+	string GetTestOutput() const { return testOutput; }
+	void ResetWorkbench();
 
 protected:
+	gvertex AddConstGate(bool c);
 	unique_ptr<Graph<unique_ptr<Gate>, unique_ptr<Signal>>> graph;
 	vector<gvertex>   InputGates;
 	vector<gvertex>   OutputGates;
+	vector<gvertex>   ConstGates;
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates; 
 	vector<unique_ptr<UserDefinedGateModel>> UserDefinedGates;
@@ -73,7 +76,7 @@ protected:
 	std::size_t lastID; 
 	std::unordered_map<string, gvertex> VertexNames;
 	std::unordered_map<string, int> TypeNames; 
-	void removeEmptyGatesFromList();
+	string testOutput;
 
 	
 };
@@ -89,7 +92,7 @@ class WorkbenchStatusException : public runtime_error
 public:
 	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) 
 	:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires " + to_string(wantedStatus)){}	
-	//TODO: Something more explicit
+
 	WorkbenchStatusException(WorkbenchStatus actualStatus)
 		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
 };

@@ -4,9 +4,9 @@ using pin = std::pair<std::string, std::size_t>;
 
 Workbench::Workbench() : lastID(0)
 {
-	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>()); 
+	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(); 
 	std::size_t s_size = 13;
-	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST 1", "CONST 0","INPUT","OUTPUT","DOUBLE" };
+	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
 	for(size_t i = 0; i < s_size; i++)
 	{
 		StandardGate.push_back(s[i]);
@@ -81,7 +81,6 @@ vector<string> Workbench::ListOfNamedVertex()
 
 bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t& freeInputID, const std::size_t& freeOutputPosition, const std::size_t& freeOutputID)
 {
-	//TODO: Mark specific errors
 	StatusCheck(UnderConstruction); 
 	
 	if (freeInputPosition > freeInputGates.size() || freeInputPosition < 0 ||
@@ -168,11 +167,10 @@ gvertex Workbench::Add(const std::size_t& num)
 			added = make_unique<BlankGate>(BlankGate(GetNewID()));
 			break; 
 		case 8: 
-			added = make_unique<ConstGate1>(ConstGate1(GetNewID()));
-			break; 
+			return AddConstGate(true);
 		case 9: 
-			added = make_unique<ConstGate0>(ConstGate0(GetNewID()));
-		case 10: 
+			return AddConstGate(false);
+	    case 10: 
 			return AddInputGate();
 		case 11: 
 			return AddOutputGate();
@@ -190,7 +188,6 @@ gvertex Workbench::Add(const std::size_t& num)
 		freeOutputGates.push_back(v);
 	return v; 
 }
-
 gvertex Workbench::GetType(string typeName)
 {
 	int index = TypeNames.at(typeName);
@@ -235,11 +232,9 @@ bool Workbench::AddNamedGate(string gateName, string typeName)
 	}
 }
 
-
 bool Workbench::AddUserDefineGate(const std::size_t& positionInList)
 {
 	StatusCheck(UnderConstruction);
-	//TODO: Mark errors 
 	if (positionInList > UserDefinedGates.size() || positionInList < 0)
 		return false; 
 
@@ -288,7 +283,7 @@ bool Workbench::SetInput(vector<bool> input)
 	for (auto o : OutputGates)
 		o->value->Reset();
 	std::size_t tacts = 0; 
-	//TODO: CHECK
+
 	vector<WorkbenchStatus> statuses; 
 	statuses.push_back(Constructed);
 	statuses.push_back(Calculated);
@@ -310,6 +305,21 @@ bool Workbench::SetInput(vector<bool> input)
 				e->value->status = Zero;
 		}
 	}
+
+	for (auto i : ConstGates)
+	{
+		vector<gedge> edges = graph->edges_from(i);
+		vector<bool> blank;
+		for (auto e : edges)
+		{
+			following_tact_gates.insert(e->to);
+			if(i->value->Update(blank)[0])
+				e->value->status = One;
+			else
+				e->value->status = Zero;
+		}
+	}
+
 		set<gvertex> actual_tact_gates = following_tact_gates;
 		following_tact_gates.clear();
 		while (any_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return !(o_g->value->result);}))
@@ -363,12 +373,12 @@ vector<bool> Workbench::ReadOutput()
 	return o; 
 }
 
-
-
 bool Workbench::ConstructUserGate(string name)
 {
-	//TODO:check constructed too
-	StatusCheck(Calculated);
+	vector<WorkbenchStatus> ws; 
+	ws.push_back(Calculated); 
+	ws.push_back(Constructed);
+	StatusCheck(ws);
 	unique_ptr<UserDefinedGateModel> model = 
 		make_unique<UserDefinedGateModel>(UserDefinedGateModel(std::move(graph), InputGates, OutputGates,name,GetNewID()));
 	UserDefinedGates.push_back(std::move(model));
@@ -400,14 +410,88 @@ vector<string> Workbench::ListAllGates()
 	return output;
 }
 
+void Workbench::ResetWorkbench(bool deleteUDG)
+{
+	status = UnderConstruction;
+	graph = make_unique<Graph<unique_ptr<Gate>, unique_ptr<Signal>>>();
+	InputGates.clear();
+	OutputGates.clear();
+	ConstGates.clear();
+	freeOutputGates.clear();
+	freeInputGates.clear();
+	if (deleteUDG) {
+		//TODO: clear Type names as well
+		UserDefinedGates.clear();
+	}
+	VertexNames.clear();
+	testOutput.clear();
+}
+
+gvertex Workbench::AddConstGate(bool c)
+{
+	unique_ptr<Gate> g;
+	if(c)
+		g = make_unique<ConstGate1>(ConstGate1(GetNewID()));
+	else 
+		g = make_unique<ConstGate0>(ConstGate0(GetNewID()));
+	gvertex v = graph->add_vertex(std::move(g));
+	ConstGates.push_back(v);
+	freeOutputGates.push_back(v);
+	return v; 
+}
+
 
 bool Workbench::TestOfCorrection()
 {
-	//TODO: infinit loop test, correction of output
-	if (InputGates.size() == 0 || OutputGates.size() == 0 ||
-		freeOutputGates.size() != 0 || freeInputGates.size() != 0)
+	testOutput = "Test of correction: \n";
+	// All connection  and io tests 
+	if (InputGates.size() == 0)
+	{
+		testOutput += "Input size is zero\n";
 		return false; 
-	else return true; 
+	}
+	if (OutputGates.size() == 0)
+	{
+		testOutput += "Output size is zero\n";
+		return false; 
+	}
+	if(freeOutputGates.size() != 0)
+	{
+		testOutput += "All of ouput pins are not connected\n"; 
+		return false; 
+	}
+	if (freeInputGates.size() != 0)
+	{
+		testOutput += "All of input pins are not connected\n";
+		return false;
+	}
+
+	//Test empty circuits 
+	vector<gvertex> startingV; 
+	std::for_each(InputGates.begin(), InputGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
+	std::for_each(ConstGates.begin(), ConstGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
+	if(graph->all_vertices_available_from(startingV))
+	{
+		testOutput += "\tAccessibility check: OK \n";
+	}
+	else
+	{
+		testOutput += "Invalid graph,some part of graph is not connected to inputs or const inputs";
+		return false;
+	}
+
+	if(!graph->cycle_detection())
+	{
+		testOutput += "\t No cycle detected\n";
+	}
+	else
+	{
+		testOutput += "Invalid graph, cycle detected.\n"; 
+		return false; 
+	}
+
+
+	return true; 
 }
 
 void Workbench::StatusCheck(WorkbenchStatus s) const
@@ -503,7 +587,11 @@ bool WorkbenchTUI::ReadFile(string path)
 	string typeName; 
 	string vertexName; 
 	
-	//TODO: Check end of file
+	if(inputFile.eof())
+	{
+		output << "Unexpected eof" << endl;
+		return false;
+	}
 	getline(inputFile, line);
 	while (line[0] != '#')
 	{
@@ -543,7 +631,11 @@ bool WorkbenchTUI::ReadFile(string path)
 		output << line << std::endl << "incorrect connection tag format" << endl;
 		return false;
 	}
-	//TODO:Check end of file 
+	if (inputFile.eof())
+	{
+		output << "Unexpected eof" << endl;
+		return false;
+	}
 	getline(inputFile, line);
 
 	
@@ -622,13 +714,11 @@ bool WorkbenchTUI::ReadFile(string path)
 	output << "Construction part: " << endl;
 	if(workbench->ListOfFreeInputGates().size() != 0)
 	{
-		//TODO: Specific gate
 		output << "Not connected input pins: " << endl;
 		return false;
 	}
 	if (workbench->ListOfFreeOutputGates().size() != 0)
 	{
-		//TODO: Specific gate
 		output << "Not connected output pins: " << endl;
 		return false;
 	}
@@ -650,10 +740,12 @@ bool WorkbenchTUI::ReadFile(string path)
 	if(workbench->ConstructBench())
 	{
 		output << "\tBench was successfully constructed" << endl;
+		output << workbench->GetTestOutput();
 	}
 	else
 	{
-		output << "\tInvalid bench architecture, construction failed" << endl;
+		output << "\tInvalid bench architecture, construction failed \n" << endl;
+		output << workbench->GetTestOutput();
 		return false;
 	}
 
