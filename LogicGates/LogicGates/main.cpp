@@ -27,7 +27,10 @@ int main(int argc, char *argv[])
 		string file = argv[1];
 		w->PassiveMode(path +'\\'+file, argv[2]);
 	}
-	else 
+	else
+	{
+		w->InteraktiveMode();
+	}
 	cout << endl; 
 	
 	

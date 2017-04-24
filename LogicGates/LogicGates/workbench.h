@@ -130,6 +130,6 @@ protected:
 	std::size_t maxSizeOfTag = 40;
 	std::string forbidenChars = "\n\t ";
 	bool ParsePin(string input, std::pair<string, std::size_t>& pair);
-	string boolsToString(std::vector<bool> v);
-	std::vector<bool> stringToBools(string s);
+	bool  boolsToString(std::vector<bool> v,string& s);
+	bool stringToBools(string s, std::vector<bool>& b);
 };

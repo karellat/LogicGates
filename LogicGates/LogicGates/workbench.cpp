@@ -457,7 +457,7 @@ bool WorkbenchTUI::ReadFile(string path)
 {
 	output << "Reading file " + path << endl;
 	string line; 
-	OpenFile(path);
+	if (!OpenFile(path)) return false;
 	//Read name and check input tag
 	getline(inputFile, line);
 	vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
@@ -659,20 +659,52 @@ bool WorkbenchTUI::ReadFile(string path)
 }
 
 void WorkbenchTUI::InteraktiveMode()
+
 {
+	string line;
+	output << "Insert path of input file: " << endl << "\t";
+	input >> line;
+	while(!ReadFile(line))
+	{
+		output << "Invalid name, insert path of correct input file: " << endl << "\t"; 
+		input >> line;
+	}
+	output << "Set input gates: \t";
+	input >> line;
+	vector<bool> in; 
+	while (!stringToBools(line,in))
+	{
+		output << "Wrong format of input, set input gates: \t";
+		input >> line;
+	}
+	while(true)
+	{
+		if (!SetInput(in)) {
+			while (!stringToBools(line, in))
+			{
+				output << "Set input gates: \t";
+				input >> line;
+			}
+		}
+		else
+		{
+			vector<bool> out;
+			string s;
+			ReadOutputs(out);
+			boolsToString(out, s);
+			output << "Outputs : " << s << endl;
+			output << "Set new input: \t";
+		}
+	}
+
+
+	
 }
 
 void WorkbenchTUI::PassiveMode(string path, string inputString)
 {
 	vector<bool> inputSettings;
-	try {
-		 inputSettings = stringToBools(inputString);
-	}
-	catch(runtime_error)
-	{
-		output << "Wrong format of input: " << inputString;
-		return;
-	}
+	stringToBools(inputString,inputSettings);
 	//Prepare bench: 
 	if (!ReadFile(path))
 		return;
@@ -685,7 +717,9 @@ void WorkbenchTUI::PassiveMode(string path, string inputString)
 		return; 
 	else
 	{
-		output << "Calculation was successfull, readed values: " << boolsToString(o) << endl;
+		string os; 
+		boolsToString(o, os); 
+		output << "Calculation was successfull, readed values: " << os << endl;
 	}
 
 	output << "Application closed" << endl;
@@ -695,9 +729,17 @@ void WorkbenchTUI::PassiveMode(string path, string inputString)
 
 bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
 {
+	if(inputSettings.size() != workbench->SizeOfInput())
+	{
+		output << "Invalid size of input " << endl;
+		return false; 
+	}
 	if(workbench->SetInput(inputSettings))
 	{
-		output << "Input was set to: " << boolsToString(inputSettings) << endl;
+		string s;
+		boolsToString(inputSettings, s);
+		output << "Input was set to: " << s << endl;
+		return true;
 	}
 	else
 	{
@@ -812,26 +854,32 @@ std::string WorkbenchTUI::ToUpper(std::string s)
 	return o;
 }
 
-string WorkbenchTUI::boolsToString(std::vector<bool> v)
+bool WorkbenchTUI::boolsToString(std::vector<bool> v,string& s)
 {
-	string s; 
 	transform(v.begin(), v.end(), std::inserter(s, s.begin()), [](bool c)
 	{
 		if (c) return '1'; else return '0';
 	});
 
-	return s;
+	return true;
 }
 
-std::vector<bool> WorkbenchTUI::stringToBools(string s)
+bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
 {
-	vector<bool> b; 
-	transform(s.begin(), s.end(), std::inserter(b, b.begin()), [](char c)
+	try
 	{
-		if (c == '1') return true; else if (c == '0') return false;
-		else throw runtime_error("UnknownChar");
-	});
-	return b;
+		transform(s.begin(), s.end(), std::inserter(b, b.begin()), [](char c)
+		{
+			if (c == '1') return true; else if (c == '0') return false;
+			else throw runtime_error("UnknownChar");
+		});
+	}
+	catch(runtime_error)
+	{
+		output << "Wrong format of input: " << s << endl;
+		return false;
+	}
+	return true;
 }
 
 
