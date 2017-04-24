@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <memory>
 #include "workbench.h"
+#include "workbenchTUI.h"
 using namespace std;
 
 
