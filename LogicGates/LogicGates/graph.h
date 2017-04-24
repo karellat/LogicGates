@@ -3,6 +3,8 @@
 #include <memory>
 #include <algorithm>
 #include <queue>
+#include <unordered_set>
+#include <stack>
 
 using namespace std;
 
@@ -65,26 +67,124 @@ struct Graph {
 		return output;
 	}
 
-    vtype * find(VertexValue value,vtype * starting_vertex)
+	unordered_set<vtype *> verticies_from(vtype* a)
 	{
-		std::queue<vtype *> q; 
-		q.push(starting_vertex); 
-
-		while(q.size() != 0)
+		std::unordered_set<vtype*> vs; 
+		for (etype* i : edges_from(a))
 		{
-			vtype* v = q.front();
-			q.pop();
-			
-			if (v->value == value)
-				return v; 
-
-			for (auto i : edges_from(v))
-				q.push(i->to);
+			vs.insert(i->to);
 		}
-		return nullptr; 
+		return vs;
 	}
 
 
+	bool cycle_detection();
+	bool all_vertices_available_from(vector<vtype *> from);
+
 };
+
+template <typename VertexValue, typename EdgeValue>
+bool Graph<VertexValue, EdgeValue>::cycle_detection()
+{
+	if (vertices.size() == 0) return false;
+	//find verticies with only outputEdges:
+	std::stack<vtype*> stack;
+	std::unordered_set<vtype *> closed;
+	std::unordered_set<vtype *> opened;
+	for (auto&&  v :  vertices)
+	{
+		if(edges_to(v.get()).size() == 0)
+		{
+			stack.push(v.get());
+		}
+	}
+	if (stack.size() == 0)
+	{
+		stack.push(vertices[0].get());
+	}
+
+	while(!stack.empty())
+	{
+		vtype * v = stack.top();
+		//all children visited
+		if (opened.find(v) != opened.end())
+		{
+			closed.insert(v);
+			stack.pop();
+			continue;
+		}
+		for (auto i : verticies_from(v))
+		{
+			//Circular edge, Cycle found
+			if (i == v)
+				return true;
+			//Visited vertex
+			if(closed.find(i) != closed.end())
+				continue;
+			//Circular way, Cycle found 
+			if (opened.find(i) != opened.end())
+				return true;
+			//corect, push
+			stack.push(i);
+
+			//TODO: more components 
+		}
+		opened.insert(v);
+		//More components 
+		if (stack.empty() && closed.size() != vertices.size())
+		{
+			for(auto&& j : vertices)
+			{
+				if (closed.find(j.get()) != closed.end())
+				{
+					stack.push(j.get());
+					break;
+				}
+			}
+		}
+	}
+
+
+	return false;
+}
+
+template <typename VertexValue, typename EdgeValue>
+bool Graph<VertexValue, EdgeValue>::all_vertices_available_from(vector<vtype*> from)
+{
+	std::stack<vtype*> stack;
+	std::unordered_set<vtype *> closed;
+	std::unordered_set<vtype *> opened;
+	for (vtype * v : from)
+	{
+		stack.push(v);	
+	}
+	if (stack.size() == 0)
+	{
+		stack.push(vertices[0].get());
+	}
+
+	while (!stack.empty())
+	{
+		vtype * v = stack.top();
+		if (opened.find(v) != opened.end())
+		{
+			closed.insert(v);
+			stack.pop();
+			continue;
+		}
+		for (auto i : verticies_from(v))
+		{
+			//Cycle, same vertex, visited vertex
+			if (i == v  || closed.find(i) != closed.end() || opened.find(i) != opened.end())
+				continue;
+
+			stack.push(i);
+		}
+		opened.insert(v);
+	}
+	return closed.size() == vertices.size();
+}
+
+
 
 
