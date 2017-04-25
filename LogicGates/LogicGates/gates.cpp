@@ -10,6 +10,8 @@ std::unique_ptr<UserDefinedGate> UserDefinedGateModel::getGate(size_t id)
 
 std::vector<bool> UserDefinedGateModel::Update(std::vector<bool> input)
 {
+	for (auto o : outputGates)
+		o->value->Reset();
 	if (input.size() != input_size)
 		throw new runtime_error("Not suitable lenght of input ");
 

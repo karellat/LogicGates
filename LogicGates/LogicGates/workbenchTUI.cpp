@@ -362,6 +362,7 @@ bool WorkbenchTUI::InteractiveReadingFile()
 		
 
 		if (!ReadFile(line)) {
+			inputFile.close();
 			output << "Invalid name, insert path of correct input file: " << endl << "\t";
 		}
 		else

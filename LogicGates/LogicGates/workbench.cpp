@@ -333,6 +333,10 @@ bool Workbench::SetInput(vector<bool> input)
 			for(auto av : actual_tact_gates)
 			{
 				vector<gedge> input_edges = graph->edges_to(av); 
+				/*std::sort(input_edges.begin(),input_edges.end(),[] ()
+				{
+				
+				});*/
 				vector<bool> in; 
 				bool notFinished = false;
 				in.resize(av->value->GetLengthOfInput(), false);
@@ -533,6 +537,7 @@ vector<std::size_t> Workbench::freeInputPins(gvertex v) const
 	connected_id.resize(edges_to.size());
 	std::transform(edges_to.begin(), edges_to.end(), connected_id.begin(), [](gedge v) {return v->value->toID; });
 	vector<std::size_t> output; 
+	std::sort(connected_id.begin(), connected_id.end());
 	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output,output.begin()));
 	return output;
 }
@@ -547,6 +552,7 @@ vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
 	connected_id.resize(edges_from.size());
 	std::transform(edges_from.begin(), edges_from.end(), connected_id.begin(), [](gedge v) {return v->value->fromID; });
 	vector<std::size_t> output;
+	std::sort(connected_id.begin(), connected_id.end());
 	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output, output.begin()));
 	return output;
 
