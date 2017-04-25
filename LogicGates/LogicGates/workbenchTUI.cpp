@@ -58,11 +58,19 @@ bool WorkbenchTUI::ReadFile(string path)
 		typeName = ToUpper(tokens[1]);
 		output << "\tVertex Name: " << vertexName << " Type Name: " << typeName << endl;
 
-		if (!workbench->AddNamedGate(vertexName, typeName))
+		try {
+			if (!workbench->AddNamedGate(vertexName, typeName))
+			{
+				output << "\tAdding same named vertex or unknown type";
+				return false;
+			}
+		}
+		catch(out_of_range)
 		{
-			output << "\tAdding same named vertex or unknown type";
+			output << "\tNon existing type name \"" << typeName << "\"" << endl;
 			return false;
 		}
+
 		line = "";
 		while (line == "")
 		{
@@ -344,7 +352,6 @@ void WorkbenchTUI::InteractiveSeting()
 		}
 	}
 }
-
 bool WorkbenchTUI::InteractiveReadingFile()
 {
 	string line;
