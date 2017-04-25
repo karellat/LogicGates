@@ -192,10 +192,16 @@ gvertex Workbench::GetType(string typeName)
 {
 	int index = TypeNames.at(typeName);
 	//User defined Gates: 
-	//TODO: resolve
 	if(index < 0 )
 	{
-		throw new runtime_error("Not Implemented yet");
+		size_t i = (index * -1) - 1; 
+		unique_ptr<Gate> g = UserDefinedGates[i]->getGate(GetNewID());
+		auto v = graph->add_vertex(std::move(g));
+		if (v->value->GetLengthOfInput() > 0)
+			freeInputGates.push_back(v);
+		if (v->value->GetLengthOfOutput() > 0)
+			freeOutputGates.push_back(v);
+		return v; 
 	}
 	//Predefined Gates 
 	else
@@ -327,9 +333,9 @@ bool Workbench::SetInput(vector<bool> input)
 			for(auto av : actual_tact_gates)
 			{
 				vector<gedge> input_edges = graph->edges_to(av); 
-				vector<bool> input; 
+				vector<bool> in; 
 				bool notFinished = false;
-				input.resize(av->value->GetLengthOfInput(), false);
+				in.resize(av->value->GetLengthOfInput(), false);
 				for (auto e : input_edges)
 				{
 					if (e->value->status == Floating)
@@ -338,13 +344,13 @@ bool Workbench::SetInput(vector<bool> input)
 						break;
 					}
 					else if (e->value->status == One)
-						input[e->value->toID] = true;
+						in[e->value->toID] = true;
 					else
-						input[e->value->toID] = false;
+						in[e->value->toID] = false;
 				}
 				if (notFinished) continue; 
 
-				vector<bool> output = av->value->Update(input); 
+				vector<bool> output = av->value->Update(in); 
 				vector<gedge> output_edges = graph->edges_from(av);
 				for(auto oe : output_edges)
 				{
@@ -379,9 +385,9 @@ bool Workbench::ConstructUserGate(string name)
 	ws.push_back(Calculated); 
 	ws.push_back(Constructed);
 	StatusCheck(ws);
-	unique_ptr<UserDefinedGateModel> model = make_unique<UserDefinedGateModel>(UserDefinedGateModel(std::move(graph), InputGates, OutputGates, ConstGates, name, GetNewID()));
+	unique_ptr<UserDefinedGateModel> model = make_unique<UserDefinedGateModel>(std::move(graph), InputGates, OutputGates, ConstGates, name, GetNewID());
 	UserDefinedGates.push_back(std::move(model));
-	//TODO: Make new type name
+	TypeNames[name] = -1 * (int)UserDefinedGates.size();
 	ResetWorkbench(false);
 	return true; 
 }
@@ -421,8 +427,14 @@ void Workbench::ResetWorkbench(bool deleteUDG)
 	freeOutputGates.clear();
 	freeInputGates.clear();
 	if (deleteUDG) {
-		//TODO: clear Type names as well
 		UserDefinedGates.clear();
+		std::size_t size_s = 13;
+		std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
+		TypeNames.clear();
+		for (std::size_t i = 0; i < size_s; i++)
+		{
+			TypeNames[s[i]] = i + 1;
+		}
 	}
 	VertexNames.clear();
 	testOutput.clear();

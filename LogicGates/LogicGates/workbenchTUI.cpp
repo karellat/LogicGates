@@ -464,7 +464,8 @@ std::string WorkbenchTUI::ToUpper(std::string s)
 {
 	string o;
 	o.resize(s.size());
-	std::transform(s.begin(), s.end(), o.begin(), toupper);
+	std::locale loc;
+	std::transform(s.begin(), s.end(), o.begin(), [loc](char c) {return toupper(c,loc); });
 	return o;
 }
 
