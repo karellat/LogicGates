@@ -49,7 +49,7 @@ public:
 	bool SetInput(vector<bool> input);
 	vector<bool> ReadOutput();
 	bool ConstructUserGate(string name);
-	vector<string> ListAllGates(); 
+	vector<string> ListAllGates() const; 
 	string GetTestOutput() const { return testOutput; }
 	void ResetWorkbench(bool deleteUDG);
 

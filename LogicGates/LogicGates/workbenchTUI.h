@@ -4,12 +4,9 @@
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(streambuf* output, streambuf* input) : output(output), input(input)
-	{
-		workbench = make_unique<Workbench>();
-	}
+	WorkbenchTUI(streambuf* output, streambuf* input) : output(output), input(input), exiting(false), workbench(make_unique<Workbench>())
+	{}
 	~WorkbenchTUI();
-	void WaitForFile();
 	bool ReadFile(string path);
 	void InteraktiveMode();
 	void InteraktiveMode(string path);
@@ -41,4 +38,11 @@ protected:
 	bool ParsePin(string input, std::pair<string, std::size_t>& pair);
 	bool  boolsToString(std::vector<bool> v, string& s);
 	bool stringToBools(string s, std::vector<bool>& b);
+	bool exiting;
+	bool reseting;
+	bool constructing;
+	bool ParseKeyWords(string word);
+	string name;
+	bool ShowHelp(string word);
+
 };

@@ -6,9 +6,6 @@ WorkbenchTUI::~WorkbenchTUI()
 {
 }
 
-void WorkbenchTUI::WaitForFile()
-{
-}
 
 bool WorkbenchTUI::ReadFile(string path)
 {
@@ -39,7 +36,7 @@ bool WorkbenchTUI::ReadFile(string path)
 	gate_name = ToUpper(gate_name);
 
 	output << "\tGate NAME: " << gate_name << endl;;
-
+	name = gate_name;
 	//Setting names: 
 
 	string typeName;
@@ -225,27 +222,65 @@ bool WorkbenchTUI::ReadFile(string path)
 }
 
 void WorkbenchTUI::InteraktiveMode()
-
 {
-	if (InteractiveReadingFile())
+	while(!exiting && InteractiveReadingFile())
 	{
 		InteractiveSeting();
+		if (constructing)
+		{
+			constructing = false;
+			if (workbench->ConstructUserGate(name))
+			{
+				output << "Gate was successful constructed, name: " << name << endl;
+				name = "";
+			}
+			else
+			{
+				output << "Gate construction failed, exiting " << endl;
+				exiting = true;
+			}
+
+		}
+		if (reseting)
+		{
+			workbench->ResetWorkbench(true);
+			output << "Reseting readed workbench, deleting user defined gates" << endl;
+			reseting = false;
+		}
 	}
-	else
-	{
 		output << "Exiting interactive mode" << endl;
-	}
 }
 void WorkbenchTUI::InteraktiveMode(string path)
 {
-	if (ReadFile(path))
+	bool  inRead = false; 
+	while (!exiting && (inRead || ReadFile(path)))
 	{
 		InteractiveSeting();
+		if(constructing)
+		{
+			constructing = false;
+			if(workbench->ConstructUserGate(name))
+			{
+				output << "Gate was successful constructed, name: " << name << endl;
+				name = "";
+				while(!InteractiveReadingFile()){} 
+				inRead = true; 
+			}
+			else
+			{
+				output << "Gate construction failed, exiting " << endl;
+				exiting = true;
+			}
+		}
+		if (reseting)
+		{
+			workbench->ResetWorkbench(true);
+			output << "Reseting readed workbench, deleting user defined gates" << endl;
+			reseting = false;
+		}
 	}
-	else
-	{
 		output << "Exiting interactive mode" << endl;
-	}
+	
 }
 
 void WorkbenchTUI::PassiveMode(string path, string inputString)
@@ -280,18 +315,13 @@ void WorkbenchTUI::InteractiveSeting()
 	vector<bool> in;
 	vector<bool> out;
 	string s;
-	while (true)
+	while (!exiting && !reseting && !constructing)
 	{
-
-
 		string line;
-		output << "Set input: ";
+		output << "Set input(" + to_string(workbench->SizeOfInput())<< "):\t";
 		input >> line;
-		if (line == "exit" || line == "q" || line == "quit" || line == "break")
-		{
-			output << "Exiting inputs setting" << endl;
-			return;
-		}
+		if (ShowHelp(line) || ParseKeyWords(line))
+			continue;
 		if (stringToBools(line, in))
 		{
 			if (SetInput(in))
@@ -320,14 +350,16 @@ bool WorkbenchTUI::InteractiveReadingFile()
 	string line;
 	output << "Insert path of input file: " << endl << "\t";
 
-	while (true)
+	while (!exiting)
 	{
 		input >> line;
-		if (line == "exit" || line == "q" || line == "quit" || line == "break")
+		if (ShowHelp(line)) continue;
+		if (  line == "exit" || line == "q" || line == "kill" || line == "quit")
 		{
-			output << "Exiting inputs setting" << endl;
-			return false;
+			exiting = true;
+			continue;
 		}
+		
 
 		if (!ReadFile(line)) {
 			output << "Invalid name, insert path of correct input file: " << endl << "\t";
@@ -337,7 +369,6 @@ bool WorkbenchTUI::InteractiveReadingFile()
 			return true;
 		}
 	}
-
 	return true;
 }
 
@@ -446,7 +477,6 @@ bool WorkbenchTUI::nameCharsCheck(string name)
 
 }
 
-
 std::vector<string> WorkbenchTUI::Split(string s, char delimeter, StringSplitOption option)
 {
 	vector<string> tokens;
@@ -499,4 +529,39 @@ bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
 	return true;
 }
 
+bool WorkbenchTUI::ParseKeyWords(string word)
+{
+	if (word == "exit" || word == "q" || word == "kill" || word == "quit")
 
+	{
+		exiting = true;
+		return true;
+	}
+
+	if (word == "reset" || word == "r")
+	{
+		reseting = true;
+		return true;
+	}
+
+	if (word == "const" || word == "c" || word == "construct")
+	{
+		constructing = true;
+		return true; 
+	}
+	return false;
+
+}
+
+bool WorkbenchTUI::ShowHelp(string word)
+{
+	if(word == "help" || word == "h" || word == "man")
+	{
+		output << "\t EXIT: \"exit\" ; \"e\", RESET: \"reset\";\"r\",CONSTR: \"const\", \"c\" \n";
+		return true;
+	}
+	return false;
+}
+
+
+ 

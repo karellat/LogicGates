@@ -392,7 +392,7 @@ bool Workbench::ConstructUserGate(string name)
 	return true; 
 }
 
-vector<string> Workbench::ListAllGates()
+vector<string> Workbench::ListAllGates() const
 {
 	vector<string> output; 
 	for (auto && v : graph->vertices)

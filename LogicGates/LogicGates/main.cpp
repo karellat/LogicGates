@@ -34,7 +34,9 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	
+	cout << "WorkbenchTUI closed, press ENTER";
 	getline(cin, blank);
+	getline(cin, blank);
+
 }
 
