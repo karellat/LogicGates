@@ -5,14 +5,14 @@ As a term project for programming in c++
 
 Consists of: 
 
-##Graph 
+## Graph 
 
 * general simple multigraph
     * adding verteces, edges with arbitary values
     * cycle test
     * accessbillity test 
 
-##Gates
+## Gates
 
 * basic logic gates:
     * NOT
@@ -35,7 +35,7 @@ Consists of:
     * gates made of basic or reusing user defined gates
     * simulating of intern gate      
         
-##workbench: 
+## workbench: 
 
 * creating new circuit(UnderConstruction)
     * add gate
@@ -49,9 +49,9 @@ Consists of:
      * read output (Calculated)
      * construct the gate from actual bench
                 
-##workbenchTUI
+## workbenchTUI
 
 *  reading gates from file (file format: example.txt)
 *  set inputs to constructed gates
  
-##Examples of gates: 
+## Examples of gates: 
