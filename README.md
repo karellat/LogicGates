@@ -4,12 +4,16 @@ Logic gates simple simulation with console input user interface
 As a term project for programming in c++
 
 Consists of: 
+
 ##Graph 
+
 * general simple multigraph
     * adding verteces, edges with arbitary values
     * cycle test
     * accessbillity test 
+
 ##Gates
+
 * basic logic gates:
     * NOT
     * AND 
@@ -32,6 +36,7 @@ Consists of:
     * simulating of intern gate      
         
 ##workbench: 
+
 * creating new circuit(UnderConstruction)
     * add gate
     * connect gates
@@ -45,8 +50,8 @@ Consists of:
      * construct the gate from actual bench
                 
 ##workbenchTUI
+
 *  reading gates from file (file format: example.txt)
 *  set inputs to constructed gates
  
 ##Examples of gates: 
-       
