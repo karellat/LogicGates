@@ -1,10 +1,10 @@
 #GATE	MyGate
 i0	INPUT
-i1	INPUT
+i1	Const1
 
 A	XOR
 N	NOT
-o1	OUTPUT
+o1	OuTPUT
 o2	OUTPUT
 d	DOUBLE
 

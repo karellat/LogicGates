@@ -202,7 +202,7 @@ public:  NorGate(size_t ID) : Gate(2,1,"Nor Gate",ID) {}
 	std::vector<bool> Update(std::vector<bool> input) override
 		 {
 			 result = true; 
-			 resultValues[0] = !(input[0] && input[1]);
+			 resultValues[0] = !(input[0] || input[1]);
 			 return resultValues; 
 		 }
 };
