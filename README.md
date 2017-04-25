@@ -35,7 +35,7 @@ Consists of:
     * gates made of basic or reusing user defined gates
     * simulating of intern gate      
         
-## workbench: 
+## Workbench: 
 
 * creating new circuit(UnderConstruction)
     * add gate
@@ -49,7 +49,7 @@ Consists of:
      * read output (Calculated)
      * construct the gate from actual bench
                 
-## workbenchTUI
+## WorkbenchTUI
 
 *  reading gates from file (file format: example.txt)
 *  set inputs to constructed gates
