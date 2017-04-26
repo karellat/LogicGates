@@ -1,0 +1,56 @@
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt, oneside]{article}  
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}					
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphics}
+\usepackage{listings} 
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{fullpage}
+\usepackage{cancel}
+\newcommand\tab[1][1cm]{\hspace*{#1}}
+\newcommand*{\QEDB}{\hfill\ensuremath{\square}}
+\title{\vspace{-12ex}Logic Gates \\ C++ zápočtový }
+\author{\vspace{-10ex}Tomáš Karella}
+\date{\today}
+\begin{document}
+\maketitle
+\section*{Téma:} Cílem zápočtového programu je program implementující logické sítě a rozhraní, které umí načíst konstrukt hradla ze souboru.
+\section*{Kompilace a spouštění:} Pro spuštění na Linux distribucích je nutný překladač g++-6 a GNU Make.  \\
+\begin{lstlisting} [language=bash]
+make
+\end{lstlisting} 
+Zkompiluje zdrojové soubory a spustí interaktivní režim. \\
+\\ \\
+Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší) \\ 
+\section*{Uživatelská dokumentace:}
+Po spuštění bez parametrů se otevře interaktivní režim, který vás vyzve k zadání cesty konstručkního souboru. Po jeho úspěšném zkonstruování se přepne do  režimu vkládání vstupu, kdy pro daný vstup spočítá a vrátí výstup. Dále poskytuje možnost zkonstruovat hradlo pro další použití(,klíčové slovo: c).  Po úspěšné konstrukci se opět dostane do režimu načítání souborů. Nyní už může používat jméno prvního konstruovaného hradla jako typ. \\
+\subsection*{Klíčová slova:} 
+\textbf{exit,e} - slouží k ukončení aplikace \\
+\textbf{const, c} - konstruuje zadané hradlo, (jen v režimu, kdy je načtený konstrukční soubor) \\
+\textbf{h,help,man} - zobrazí klíčová slova \\
+\subsection*{Konstruční soubor - formát:}
+Modelový soubor lze nalézt "examples/model.txt".  Ve zmíněné složce je i celá řada příkladů k vyzkoušení programu. \\
+Soubor se skládá ze dvou hlavních částí. Pojmenování hradel, kde deklarujete jméno hradla(noCASE sensitive a smí obsahovat pouze číslice a písmena) k jménu typ hradla. Část druhá, kde se řeší jejich vzájemné propojení. Jednotlivé tagy jsou odděleny tabulátorem. \\
+\\ \\
+\#GATE\tab MYNAME (1) \\
+NameOfGate \tab Type (2)\\
+NameOfGate	\tab Type \\
+\#CONNECT (3) \\
+NameOfGate[OutputPinID]\tab	-> \tab	NameOfGate[InputPinID] (4) \\
+NameOfGate[OutputPinID]	 \tab -> \tab	NameOfGate[InputPinID] \\
+\# (5) 
+\\ \\ 
+\begin{enumerate} 
+\item kontrolní tag pro pojmenovácí část souboru a jméno vašeho hradla (oddělené tabulátorem)
+\item jméno hradla(pouze písmena a číslice) dále typ(predefinovaný či už zkonstruovaný) vzájemně odděleny tabulátorem. 
+\item  kontrolní tag pro začátek propojovací část souboru
+\item  jméno hradla a v hranatých závorkách číslo výstupního pinu dále "->" oddělená z obou stran tabulátorem jméno hradla s číslem vstupního pinu. 
+\end{enumerate} 
+Pro konstrukci musí být připojeny u hradel všechny vstupní i výstupní piny, konstrukt musí obsahovat alespoň jedno hradlo vstupní a alespoň jedno výstupní. 
+\subsection*{Konstručkní soubor - příklady} 
+
+\end{document}
