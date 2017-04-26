@@ -1,9 +1,0 @@
-﻿  workbench.cpp
-d:\data\git\logicgates\logicgates\logicgates\gates.h(226): warning C4297: 'UserDefinedGateModel::~UserDefinedGateModel': function assumed not to throw an exception but does
-  d:\data\git\logicgates\logicgates\logicgates\gates.h(226): note: destructor or deallocator has a (possibly implicit) non-throwing exception specification
-  Generating code
-  5 of 1254 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
-    3 functions were new in current compilation
-    6 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  LogicGates.vcxproj -> D:\Data\Git\LogicGates\LogicGates\Release\LogicGates.exe
