@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <memory>
 #include "workbench.h"
+#include "workbenchTUI.h"
 using namespace std;
 
 
@@ -13,24 +14,29 @@ static void WriteStringVector(vector<string> list)
 }
 int main(int argc, char *argv[])
 {
-	std::string blank;
-	string path = argv[0];
-	std::size_t  b = path.find_last_of('\\');
-	path.erase(b,path.size()-1);
-	
-	
-	
+	string blank;
 	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf());
-	if (argc == 3)
+	switch (argc)
 	{
-
-		string file = argv[1];
-		w->PassiveMode(path +'\\'+file, argv[2]);
+	case 3:
+		{
+		w->PassiveMode(argv[1], argv[2]);
+		break;
+		}
+	case 2:
+		{
+		w->InteraktiveMode(argv[1]);
+		break;
+		}
+	default:
+		{
+		w->InteraktiveMode();
+		}
 	}
-	else 
-	cout << endl; 
 	
-	
+	cout << "WorkbenchTUI closed, press ENTER";
 	getline(cin, blank);
+	getline(cin, blank);
+
 }
 

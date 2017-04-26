@@ -1,0 +1,190 @@
+% !TEX encoding = UTF-8 Unicode
+\documentclass[12pt, oneside]{article}  
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}					
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphics}
+\usepackage{listings} 
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{fullpage}
+\usepackage{cancel}
+\newcommand\tab[1][1cm]{\hspace*{#1}}
+\newcommand*{\QEDB}{\hfill\ensuremath{\square}}
+\title{\vspace{-12ex}Logic Gates \\ C++ zápočtový }
+\author{\vspace{-10ex}Tomáš Karella}
+\date{\today}
+\begin{document}
+\maketitle
+\section*{Téma:} Tento program slouží k tvorbě hradlových sítí, následně k simulaci jejich výpočtu a jejich opakovanému využití v dalších hradlových sítích. Propojení sítě je koncipováno přes načítání kostrukčního souboru, který je popsát dále.
+\section*{Kompilace a spouštění:} Pro spuštění na Linux distribucích je nutný překladač g++-6 a GNU Make.  \\
+\begin{lstlisting} [language=bash]
+make
+\end{lstlisting} 
+Zkompiluje zdrojové soubory a spustí interaktivní režim. \\
+\\ \\
+Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší) \\ 
+\section*{Uživatelská dokumentace:}
+Po spuštění bez parametrů se otevře interaktivní režim, který vás vyzve k zadání cesty konstrukčního souboru. Po jeho úspěšném zkonstruování se přepne do  režimu vkládání vstupu, kdy pro daný vstup spočítá a vrátí výstup. Dále poskytuje možnost zkonstruovat hradlo pro další použití(klíčové slovo: c).  Po úspěšné konstrukci se opět dostane do režimu načítání souborů. Nyní už může používat jméno prvního konstruovaného hradla jako typ. \\
+\subsection*{Klíčová slova:} 
+\textbf{exit,e} - slouží k ukončení aplikace \\
+\textbf{const, c} - konstruuje zadané hradlo, (jen v režimu, kdy je načtený konstrukční soubor) \\
+\textbf{h,help,man} - zobrazí klíčová slova \\
+\subsection*{Konstrukční soubor - formát:}
+Modelový soubor lze nalézt "examples/model.txt".  Ve zmíněné složce je i celá řada příkladů k vyzkoušení programu. \\
+Soubor se skládá ze dvou hlavních částí. Pojmenování hradel, kde deklarujete jméno hradla(noCASE sensitive a smí obsahovat pouze číslice a písmena) k jménu typ hradla. Část druhá, kde se řeší jejich vzájemné propojení. Jednotlivé tagy jsou odděleny tabulátorem. \\
+\\ \\
+\#GATE\tab MYNAME (1) \\
+NameOfGate \tab Type (2)\\
+NameOfGate	\tab Type \\
+\#CONNECT (3) \\
+NameOfGate[OutputPinID]\tab	-> \tab	NameOfGate[InputPinID] (4) \\
+NameOfGate[OutputPinID]	 \tab -> \tab	NameOfGate[InputPinID] \\
+\# (5) 
+\\ \\ 
+\begin{enumerate} 
+\item kontrolní tag pro pojmenovácí část souboru a jméno vašeho hradla (oddělené tabulátorem)
+\item jméno hradla(pouze písmena a číslice) dále typ(predefinovaný či už zkonstruovaný) vzájemně odděleny tabulátorem. 
+\item  kontrolní tag pro začátek propojovací část souboru
+\item  jméno hradla a v hranatých závorkách číslo výstupního pinu dále "->" oddělená z obou stran tabulátorem jméno hradla s číslem vstupního pinu. 
+\item kontrolní tag konce konstr. souboru
+\end{enumerate} 
+Pro konstrukci musí být připojeny u hradel všechny vstupní i výstupní piny, konstrukt musí obsahovat alespoň jedno hradlo vstupní a alespoň jedno výstupní. 
+\subsection*{Kostrukční soubor - seznam předdefinovaných typů hradel}
+\begin{itemize}
+\item Základní logické fce: 
+\begin{itemize}
+\item NOT
+\item AND
+\item OR
+\item XOR
+\item NAND
+\item NOR
+\item XNOR
+\end{itemize}
+\item Ostatní 
+\begin{itemize}
+\item Input
+\item Output
+\item Blank (má pouze vstup a nikam není dále posílán) 
+\item ConstIn0 (má pouze výstup a stále nastaven na 1)
+\item ConstIn1 (má pouze výstup a stále nastaven na 1) 
+\item Double (na dva výstupy pouští stejný 1 vstup) 
+\end{itemize}
+\end{itemize}
+\subsection*{Konstrukční soubor - příklady} 
+\begin{itemize}
+\item model.txt - obecný model konstručního souboru
+\item allgate.txt - hradlo využívající všechno předdefinované hradla
+\item DAND.txt - double and, and s 2 výstupy
+\item DXOR.txt - double xor, xor s 2 výstupy
+\item XORAND.txt - xor a and na stejný vstup, první výstup xor druhý and
+\item ADDW.txt - sčítačka dvou čísel a přetečení, musí být zkonstruovaný XORAND
+\item ADD4.txt - sčítačka 2x2 bitových čísel, musí být zkonstruovaný XORAND a ADDW
+\end{itemize}
+\newpage
+\section*{Implementace:}
+Implemetaci je rozdělena do následujích částí: 
+\begin{itemize}
+\item \textbf{graph}(graph.h) - implementuje multigrafu, každý vrchol a hrana nese generickou hodnotu. 
+\item \textbf{gates} (gates.h, gates.cpp) - deklaruje obecně třídu hradlo a její konkrétní implementace.
+\item \textbf{workbench} (workbench.h, workbench.cpp) -  implementuje propojování jednotlivých hradel v hradlovou síť, kontroluje jejich korektnost a konstruuje uživatelsky definovaná hradla.
+\item \textbf{workbenchTUI} (workbenchTUI.cpp, workbench.TUI.h) - řeší komunikaci mezi uživatelem a workbench, načítá konstrukční soubory.
+\item \textbf{main} (main.cpp) - parsuje vstupní parametry a spouští metody workbenchTUI.
+\end{itemize}
+\subsection*{graph} 
+Obsahuje následující šablonové třídy s typovými parametry VertexValue, EdgeValue: 
+\begin{itemize}
+\item Vertex - drží hodnotu VertexValue
+\item Edge - orientovaná hrana mezi Vertex s hodnotou EdgeValue
+\item Graph - orientovaný multigraf nad Vertex a Edge (vtype = Vertex<VertexValue>, etype = Edge<VertexValue,EdgeValue> )
+\begin{itemize}
+\item vtype * add\_vertex(VertexValue value) => přidává vrchol  do grafu bez hran
+\item etype* connect(vtype* from, vtype* to, EdgeValue value) => vytváří hranu z from do to s hodnotou value
+\item void disconnect(etype* e) => smaže v grafu hranu e
+\item vector<etype*> edges\_from(vtype* a) => vrátí seznam hran z vrcholu a
+\item vector<etype *> edges\_to(vtype* a) => vrátí seznam hran do vrcholu a 
+\item unordered\_set<vtype *> verticies\_from(vtype* a) => vrátí seznam vrcholů dosažitelných z a 
+\item bool cycle\_detection() => testuje, zda daný graf obsahuje cyklus,  implementováno DFS, které pokud se vrátí do už uzavřeného vrcholu nahlásí nalezení cyklu
+\item bool all\_vertices\_available\_from(vector<vtype*> from) => testuje, zda z daných vrcholů je dosažitelný celý graf, pomocí DFS projde graf. Pokud počet uzavřených vrcholů není shodný s velikostí grafu zahlásí false
+\end{itemize} 
+\end{itemize} 
+\subsection*{gates} 
+\begin{itemize} 
+\item výčtový typ Status - Zero, One, Floating(logická 1,0 a nenastaveno) 
+\item třída Signal - obsahuje proměnné : toID, fromID - pořadí pinů u vstupního a výstupního hradla a Status aktuální nastavení signálu 
+\item abstraktní třída Gate - 
+\begin{itemize} 
+\item obsahuje vlastnosti velikost vstupu, výstupu, název, id - unikátní číslo, result - pravdivý, když jsou nastaveny výstupy, resultValues - hodnota výstupů
+\item virtuální metoda Update - spočítá výstup z hradla
+\end{itemize} 
+\item Třídy všech předdefinovaných hradel s přetíženou metodou Update, která počítá jejich logické fce.
+\begin{itemize} 
+\item NOT AND OR XOR NAND NOR XNOR Input Output Blank ConstIn0 ConstIn1 Double
+\end{itemize} 
+\item třídu UserDefinedGateModel - třída uchovávající hradlovou síť sestavenou uživatelem, drží ukazatel na její graf, vstupní a výstupní hradla
+\begin{itemize}
+\item metoda Update - nastaví vstupní hradla, simuluje průchod skrz graf hradlovou síť a vrátí hodnoty z výstupních hradel 
+\item metoda getGate - vrací objekt třídy UserDefinedGate, která lze použít v dalších hradlových sítích 
+\end{itemize}
+\item třída UserDefinedGate - třída pro využití v dalších hradlových sítí, ukazuje na UserDefinedGateModel
+\begin{itemize} 
+\item metoda Update volá Update na modelu daného hradla 
+\end{itemize} 
+\end{itemize}
+\newpage
+\subsection*{workbench}
+\begin{itemize}
+\item výčtový typ WorkbenchStatus značící stav workbench  -  UnderConstruction, Constructed, Calculating, Calculated
+\item třídu Workbech
+\begin{itemize} 
+\item obsahuje Graph<Gate,Signal> - která je vlastní hradlovou sítí, ukazatele na modely uživatelsky definovaný hradel, na vstupní/výstupní/constatní hradla, ukazatele na ještě nepřipojená hradla(funkce pro  jejich výpis) 
+\item ve stavu konstrukce - jsou k dispozici metody pro přidávání  nových hradel, propojování.
+\begin{itemize}
+\item  bool Connect(const std::size\_t \& freeInputPosition,const std::size\_t \& freeInputID, const std::size\_t \& freeOutputPosition, const std::size\_t \& freeOutputID)\\ => připojí na vstupní pin hradla na freeInputPosition(pozice v listu hradel s volným vstupem) na výstupní pin hradla na freeOutputPosition pozici, *ID - říká číslo pinu 
+\item bool Connect(gvertex from, gvertex to, std::size\_t fromPin, std::size\_t toPin) => spojí vrchol from s vrcholem to na zvolených pinech
+\item gvertex Add(const std::size\_t \& num) => přidá hradlo do sítě, num určuje jaké standartní hradlo přidá podle pořadí ve vektoru StandardGates 
+\item gvertex GetType(string typeName) => přidá hradlo typu podle typeName(název předdefinovaného hradla, či název už nahraného hradla) 
+\item bool GetVertex(string name, gvertex\& v)  => vrátí pojmenovaný(name) vrchol do v, pokud name není jméno žádného vrcholu vrátí false
+\item bool AddNamedGate(string gateName, string typeName) => přidá pojmenovaný vrchol  typu typeName do grafu, pokud už existuje pojmenování vrátí false
+\item bool AddUserDefineGate(const std::size\_t \& positionInList) => přídá do grafu už vytvořené hradlo dle pozice v listu 
+\item 	gvertex AddInputGate()  a vertex AddOutputGate() =>  přidá vstupní či výstupní hradlo 
+\end{itemize}  
+\item Pro konstrukci:
+\begin{itemize} 
+\item bool ConstructBench() => Otestuje, zda je hradlová síť korektní. Obsahuje alespoň 1 vstupní a 1 výstupní hradlo, zda nevznikl cykl a zda je hradlo celé dosažitelné. K tomu používá metody graph. Pak se přepne workbench do stavu Constructed. Pokud testy neuspějí vrátí false
+\end{itemize} 
+\item Při úspěšně zkonstruovaném hradle:
+\begin{itemize}
+\item bool SetInput(vector<bool> input) => nastaví vstupní hradla na hodnoty z argumentu, a simuluje průchod sítí v grafu a skončí až budou nastavené všechny výstupní hradla. Vrátí false, pokud je špatný formát vstupních hodnot. 
+\item vector<bool> ReadOutput() => vrátí vypočítané výstupy, pokud byla předtím volána fce SetInput(input) 
+\end{itemize}
+\item Konstrukce hradla: 
+\begin{itemize} 
+\item bool ConstructUserGate(string name) =>Zkonstruje z aktuální sítě UserDefinedGateModel, přidá jej do seznamu všech UserDefinedGates, nastaví novému hradlu typ dle name, nakonec zavolá ResetWorkbench(false)
+\end{itemize} 
+\item Další funkce: 
+\begin{itemize}
+\item  vector<string> ListAllGates(), string GetTestOutput() => výpisové funkce všech aktuálních typů hradel a výpis z testů při konstrukci hradlové sítě
+\item void ResetWorkbench(bool deleteUDG) => smaže aktuální už zkonstruovanou část hradla, pokud deleteUDG smaže i uživatelské typy
+\end{itemize} 
+\end{itemize} 
+\end{itemize} 
+\subsection*{workbenchTUI} 
+\begin{itemize} 
+\item Tvoří vrstvu mezi uživatelem a workbench. Funguje v několika verzích. Vrací výstup na streambuf output a čte streambuf input  dané při konstrukci objektu.
+\begin{itemize} 
+\item bool ReadFile(string path) => načte hradlo z filu dle struktury konstrukčního souboru, vypisuje jednotlivé fáze čtení, pokud čtení selže vrátí false 
+\item void InteraktiveMode(),void InteraktiveMode(string path) => spustí interaktivní mód, který načte daný soubor, pak umožňuje konstrukci hradla, čtení vstupů a přidávání dalších hradel 
+\item 	void PassiveMode(string path, string inputSettings) => zkonstruuje daný konstrukční soubor, vypočítá výstup podle inputSettings a vypíše výstup. 
+\end{itemize}
+\end{itemize} 
+\subsection*{main}
+Vytváří své workbenchTUI, nastaví input na std::cin a output std::cout, dále parsuje argumenty, dle jejich počtu volá příslušné metody na workbenchTUI.
+
+
+
+
+\end{document}

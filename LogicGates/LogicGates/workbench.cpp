@@ -1,12 +1,12 @@
 #include "workbench.h"
 
-using pin = std::pair<std::string, std::size_t>;
+
 
 Workbench::Workbench() : lastID(0)
 {
-	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>()); 
-	std::size_t s_size = 12;
-	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST 1", "CONST 0","INPUT","OUTPUT" };
+	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(); 
+	std::size_t s_size = 13;
+	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
 	for(size_t i = 0; i < s_size; i++)
 	{
 		StandardGate.push_back(s[i]);
@@ -81,7 +81,6 @@ vector<string> Workbench::ListOfNamedVertex()
 
 bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t& freeInputID, const std::size_t& freeOutputPosition, const std::size_t& freeOutputID)
 {
-	//TODO: Mark specific errors
 	StatusCheck(UnderConstruction); 
 	
 	if (freeInputPosition > freeInputGates.size() || freeInputPosition < 0 ||
@@ -123,9 +122,14 @@ bool Workbench::Connect(gvertex from, gvertex to, std::size_t fromPin, std::size
 	graph->connect(from, to, std::move(s));
 	free_id_from = freeOutputPins(from);
 	free_id_to = freeInputPins(to);
-	if (free_id_from.size() == 0) freeOutputGates.erase(freeOutputGates.begin() + fromPin);
-	if (free_id_to.size() == 0)   freeInputGates.erase(freeInputGates.begin() + toPin);
-
+	
+	if (free_id_from.size() == 0)
+	{
+		freeOutputGates.erase(std::remove_if(freeOutputGates.begin(), freeOutputGates.end(), [from](gvertex v) {return from == v; }),freeOutputGates.end());
+	}
+	if (free_id_to.size() == 0) {
+		freeInputGates.erase(std::remove_if(freeInputGates.begin(), freeInputGates.end(), [to](gvertex v) {return to == v; }),freeInputGates.end());
+	}
 	return true;
 }
 gvertex Workbench::Add(const std::size_t& num)
@@ -163,14 +167,16 @@ gvertex Workbench::Add(const std::size_t& num)
 			added = make_unique<BlankGate>(BlankGate(GetNewID()));
 			break; 
 		case 8: 
-			added = make_unique<ConstGate1>(ConstGate1(GetNewID()));
-			break; 
+			return AddConstGate(true);
 		case 9: 
-			added = make_unique<ConstGate0>(ConstGate0(GetNewID()));
-		case 10: 
+			return AddConstGate(false);
+	    case 10: 
 			return AddInputGate();
 		case 11: 
 			return AddOutputGate();
+		case 12:
+			added = make_unique<DoubleGate>(DoubleGate(GetNewID()));
+			break;
 	    default: 
 	    	throw new runtime_error("Unknown adding situation, index num = " + std::to_string(num) + " out of index");
 	    }
@@ -182,15 +188,20 @@ gvertex Workbench::Add(const std::size_t& num)
 		freeOutputGates.push_back(v);
 	return v; 
 }
-
 gvertex Workbench::GetType(string typeName)
 {
 	int index = TypeNames.at(typeName);
 	//User defined Gates: 
-	//TODO: resolve
 	if(index < 0 )
 	{
-		throw new runtime_error("Not Implemented yet");
+		size_t i = (index * -1) - 1; 
+		unique_ptr<Gate> g = UserDefinedGates[i]->getGate(GetNewID());
+		auto v = graph->add_vertex(std::move(g));
+		if (v->value->GetLengthOfInput() > 0)
+			freeInputGates.push_back(v);
+		if (v->value->GetLengthOfOutput() > 0)
+			freeOutputGates.push_back(v);
+		return v; 
 	}
 	//Predefined Gates 
 	else
@@ -227,11 +238,9 @@ bool Workbench::AddNamedGate(string gateName, string typeName)
 	}
 }
 
-
 bool Workbench::AddUserDefineGate(const std::size_t& positionInList)
 {
 	StatusCheck(UnderConstruction);
-	//TODO: Mark errors 
 	if (positionInList > UserDefinedGates.size() || positionInList < 0)
 		return false; 
 
@@ -277,9 +286,14 @@ gvertex Workbench::AddOutputGate()
 
 bool Workbench::SetInput(vector<bool> input)
 {
+	for (auto o : OutputGates)
+		o->value->Reset();
 	std::size_t tacts = 0; 
-	//TODO: CHECK 
-	StatusCheck(Constructed);
+
+	vector<WorkbenchStatus> statuses; 
+	statuses.push_back(Constructed);
+	statuses.push_back(Calculated);
+	StatusCheck(statuses);
 	if (input.size() != InputGates.size())
 		throw new runtime_error("input vector does not fit input size");
 
@@ -297,6 +311,21 @@ bool Workbench::SetInput(vector<bool> input)
 				e->value->status = Zero;
 		}
 	}
+
+	for (auto i : ConstGates)
+	{
+		vector<gedge> edges = graph->edges_from(i);
+		vector<bool> blank;
+		for (auto e : edges)
+		{
+			following_tact_gates.insert(e->to);
+			if(i->value->Update(blank)[0])
+				e->value->status = One;
+			else
+				e->value->status = Zero;
+		}
+	}
+
 		set<gvertex> actual_tact_gates = following_tact_gates;
 		following_tact_gates.clear();
 		while (any_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return !(o_g->value->result);}))
@@ -304,9 +333,13 @@ bool Workbench::SetInput(vector<bool> input)
 			for(auto av : actual_tact_gates)
 			{
 				vector<gedge> input_edges = graph->edges_to(av); 
-				vector<bool> input; 
+				/*std::sort(input_edges.begin(),input_edges.end(),[] ()
+				{
+				
+				});*/
+				vector<bool> in; 
 				bool notFinished = false;
-				input.resize(av->value->GetLengthOfInput(), false);
+				in.resize(av->value->GetLengthOfInput(), false);
 				for (auto e : input_edges)
 				{
 					if (e->value->status == Floating)
@@ -315,13 +348,13 @@ bool Workbench::SetInput(vector<bool> input)
 						break;
 					}
 					else if (e->value->status == One)
-						input[e->value->toID] = true;
+						in[e->value->toID] = true;
 					else
-						input[e->value->toID] = false;
+						in[e->value->toID] = false;
 				}
 				if (notFinished) continue; 
 
-				vector<bool> output = av->value->Update(input); 
+				vector<bool> output = av->value->Update(in); 
 				vector<gedge> output_edges = graph->edges_from(av);
 				for(auto oe : output_edges)
 				{
@@ -350,19 +383,20 @@ vector<bool> Workbench::ReadOutput()
 	return o; 
 }
 
-
-
 bool Workbench::ConstructUserGate(string name)
 {
-	//TODO:check constructed too
-	StatusCheck(Calculated);
-	unique_ptr<UserDefinedGateModel> model = 
-		make_unique<UserDefinedGateModel>(UserDefinedGateModel(std::move(graph), InputGates, OutputGates,name,GetNewID()));
+	vector<WorkbenchStatus> ws; 
+	ws.push_back(Calculated); 
+	ws.push_back(Constructed);
+	StatusCheck(ws);
+	unique_ptr<UserDefinedGateModel> model = make_unique<UserDefinedGateModel>(std::move(graph), InputGates, OutputGates, ConstGates, name, GetNewID());
 	UserDefinedGates.push_back(std::move(model));
+	TypeNames[name] = -1 * (int)UserDefinedGates.size();
+	ResetWorkbench(false);
 	return true; 
 }
 
-vector<string> Workbench::ListAllGates()
+vector<string> Workbench::ListAllGates() const
 {
 	vector<string> output; 
 	for (auto && v : graph->vertices)
@@ -387,14 +421,94 @@ vector<string> Workbench::ListAllGates()
 	return output;
 }
 
+void Workbench::ResetWorkbench(bool deleteUDG)
+{
+	status = UnderConstruction;
+	graph = make_unique<Graph<unique_ptr<Gate>, unique_ptr<Signal>>>();
+	InputGates.clear();
+	OutputGates.clear();
+	ConstGates.clear();
+	freeOutputGates.clear();
+	freeInputGates.clear();
+	if (deleteUDG) {
+		UserDefinedGates.clear();
+		std::size_t size_s = 13;
+		std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
+		TypeNames.clear();
+		for (std::size_t i = 0; i < size_s; i++)
+		{
+			TypeNames[s[i]] = i + 1;
+		}
+	}
+	VertexNames.clear();
+	testOutput.clear();
+}
+
+gvertex Workbench::AddConstGate(bool c)
+{
+	unique_ptr<Gate> g;
+	if(c)
+		g = make_unique<ConstGate1>(ConstGate1(GetNewID()));
+	else 
+		g = make_unique<ConstGate0>(ConstGate0(GetNewID()));
+	gvertex v = graph->add_vertex(std::move(g));
+	ConstGates.push_back(v);
+	freeOutputGates.push_back(v);
+	return v; 
+}
+
 
 bool Workbench::TestOfCorrection()
 {
-	//TODO: infinit loop test, correction of output
-	if (InputGates.size() == 0 || OutputGates.size() == 0 ||
-		freeOutputGates.size() != 0 || freeInputGates.size() != 0)
+	testOutput = "Test of correction: \n";
+	// All connection  and io tests 
+	if (InputGates.size() == 0)
+	{
+		testOutput += "Input size is zero\n";
 		return false; 
-	else return true; 
+	}
+	if (OutputGates.size() == 0)
+	{
+		testOutput += "Output size is zero\n";
+		return false; 
+	}
+	if(freeOutputGates.size() != 0)
+	{
+		testOutput += "All of ouput pins are not connected\n"; 
+		return false; 
+	}
+	if (freeInputGates.size() != 0)
+	{
+		testOutput += "All of input pins are not connected\n";
+		return false;
+	}
+
+	//Test empty circuits 
+	vector<gvertex> startingV; 
+	std::for_each(InputGates.begin(), InputGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
+	std::for_each(ConstGates.begin(), ConstGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
+	if(graph->all_vertices_available_from(startingV))
+	{
+		testOutput += "\tAccessibility check: OK \n";
+	}
+	else
+	{
+		testOutput += "Invalid graph,some part of graph is not connected to inputs or const inputs";
+		return false;
+	}
+
+	if(!graph->cycle_detection())
+	{
+		testOutput += "\t No cycle detected\n";
+	}
+	else
+	{
+		testOutput += "Invalid graph, cycle detected.\n"; 
+		return false; 
+	}
+
+
+	return true; 
 }
 
 void Workbench::StatusCheck(WorkbenchStatus s) const
@@ -423,6 +537,7 @@ vector<std::size_t> Workbench::freeInputPins(gvertex v) const
 	connected_id.resize(edges_to.size());
 	std::transform(edges_to.begin(), edges_to.end(), connected_id.begin(), [](gedge v) {return v->value->toID; });
 	vector<std::size_t> output; 
+	std::sort(connected_id.begin(), connected_id.end());
 	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output,output.begin()));
 	return output;
 }
@@ -437,401 +552,8 @@ vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
 	connected_id.resize(edges_from.size());
 	std::transform(edges_from.begin(), edges_from.end(), connected_id.begin(), [](gedge v) {return v->value->fromID; });
 	vector<std::size_t> output;
+	std::sort(connected_id.begin(), connected_id.end());
 	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output, output.begin()));
 	return output;
 
 }
-
-////////////////////////
-//WORKBENCHTUI
-
-WorkbenchTUI::~WorkbenchTUI()
-{
-}
-
-void WorkbenchTUI::WaitForFile()
-{
-}
-
-bool WorkbenchTUI::ReadFile(string path)
-{
-	output << "Reading file " + path << endl;
-	string line; 
-	OpenFile(path);
-	//Read name and check input tag
-	getline(inputFile, line);
-	vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
-	
-	if(tokens.size() != 2)
-	{
-		output << "Wrong format, definition line" << endl;
-		return false; 
-	}
-
-	string tag = ToUpper(tokens[0]);
-	string gate_name = tokens[1];
-	if(tag != definitionTag)
-	{
-		output << line << std::endl << "incorrect definition tag format" << endl; 
-		return false; 
-	}
-	
-	if (!nameSizeCheck(gate_name.size())) return false;
-	if (!nameCharsCheck(gate_name)) return false;
-	gate_name.resize(gate_name.size());
-	gate_name = ToUpper(gate_name);
-	
-	output << "\tGate NAME: " << gate_name << endl;;
-	
-	//Setting names: 
-
-	string typeName; 
-	string vertexName; 
-	
-	//TODO: Check end of file
-	getline(inputFile, line);
-	while (line[0] != '#')
-	{
-		tokens = Split(line, '\t', RemoveEmptyEntries);
-		if (!nameSizeCheck(tokens[0]) || !nameCharsCheck(tokens[0]))
-			return false;
-
-		vertexName = ToUpper(tokens[0]);
-		typeName = ToUpper(tokens[1]);
-		output << "\tVertex Name: " << vertexName << " Type Name: " << typeName << endl;
-
-		if (!workbench->AddNamedGate(vertexName, typeName))
-		{
-			output << "\tAdding same named vertex or unknown type";
-			return false;
-		}
-		line = "";
-		while (line == "")
-		{
-			if (inputFile.eof())
-				output << "\tUnexpected end of file, in declaring section " << endl;
-			getline(inputFile, line);
-		}
-	}
-	output << "These named vertex were created: ";
-	output << "Declaration part over " << endl;
-	for (auto i : workbench->ListOfNamedVertex())
-	{
-		output << "\t " << i << endl;
-	}
-	//Connection part
-	output << "Connection part: " << endl;
-	tag = line;
-
-	if(tag != connectionTag)
-	{
-		output << line << std::endl << "incorrect connection tag format" << endl;
-		return false;
-	}
-	//TODO:Check end of file 
-	getline(inputFile, line);
-
-	
-	while (line[0] != '#')
-	{
-		tokens = Split(line, '\t', RemoveEmptyEntries);
-		if (tokens.size() != 3)
-		{
-			output << "Incorrect format of connection line " + line << endl;
-			return false;
-		}
-		pin aGate;
-		pin bGate;
-		if (!ParsePin(tokens[0], aGate) || !ParsePin(tokens[2], bGate))
-			return false;
-		if (tokens[1].size() != 2)
-		{
-			output << "Incorrect format of connection arrow: " + tokens[1];
-			return false;
-		}
-		gvertex a;
-		gvertex b;
-		if( !workbench->GetVertex(aGate.first,a)  || !workbench->GetVertex(bGate.first,b))
-		{
-			output << "Incorrect name, nick name does not exists:  " << aGate.first << ", " << bGate.first << endl;
-			return false;
-		}
-		if (tokens[1] == "->")
-		{
-			if(!workbench->Connect(a, b, aGate.second, bGate.second))
-			{
-				output << "Incorrected pin,  ocuppied or not even exists :" << line << endl;
-				return false;
-			}
-			else
-			{
-				output << "\tConnecting " << aGate.first << "[" << aGate.second << "]"
-					<< " to " << bGate.first << "[" << bGate.second << "]" << endl;
-			}
-		}
-		else if (tokens[1] == "<-")
-		{
-			if (!workbench->Connect(b, a, bGate.second, aGate.second))
-			{
-				output << "Incorrected pin,  ocuppied or not even exists :" << line << endl;
-				return false; 
-			}
-			else
-			{
-				output << "\tConnecting " << bGate.first << "[" << bGate.second << "]"
-					<< " to " << aGate.first << "[" << aGate.second << "]" << endl;
-			}
-		}
-		else
-		{		output << "Incorrect format of connection arrow " + tokens[1];
-		return false;
-		}
-		
-	
-
-
-
-		line = "";
-		while (line == "")
-		{
-			if (inputFile.eof())
-			{
-				output << "\tUnexpected end of file, in connecting section " << endl;
-				return false;
-			}
-			getline(inputFile, line);
-		}
-	}
-
-	//Construction part
-	output << "Construction part: " << endl;
-	if(workbench->ListOfFreeInputGates().size() != 0)
-	{
-		//TODO: Specific gate
-		output << "Not connected input pins: " << endl;
-		return false;
-	}
-	if (workbench->ListOfFreeOutputGates().size() != 0)
-	{
-		//TODO: Specific gate
-		output << "Not connected output pins: " << endl;
-		return false;
-	}
-	if(workbench->SizeOfInput() == 0)
-	{
-		output << "Input gates missing" << endl;
-		return false;
-	}
-	if(workbench->SizeOfOutput() == 0)
-	{
-		output << "Output gates missing" << endl;
-		return false;
-	}
-
-	output << "\tAll pins connected" << endl << "\tinput size: " << workbench->SizeOfInput() << " output size: " << workbench->SizeOfOutput() << endl;
-
-
-	output << "\tConstructing workbench" << endl;
-	if(workbench->ConstructBench())
-	{
-		output << "\tBench was successfully constructed" << endl;
-	}
-	else
-	{
-		output << "\tInvalid bench architecture, construction failed" << endl;
-		return false;
-	}
-
-	//ending tag check
-	if(line[0] == '#')
-	{
-		output << "Successfull loaded Gate from file " << endl;
-		inputFile.close();
-		return true;
-	}
-	else
-	{
-		output << "Ending tag missing, reading file failed" << endl;
-		return false;
-	}
-
-	
-}
-
-void WorkbenchTUI::InteraktiveMode()
-{
-}
-
-void WorkbenchTUI::PassiveMode(string path, string inputString)
-{
-	vector<bool> inputSettings;
-	try {
-		 inputSettings = stringToBools(inputString);
-	}
-	catch(runtime_error)
-	{
-		output << "Wrong format of input: " << inputString;
-		return;
-	}
-	//Prepare bench: 
-	if (!ReadFile(path))
-		return;
-	//Set input
-	if (!SetInput(inputSettings))
-		return;
-	
-	vector<bool> o; 
-	if (!ReadOutputs(o))
-		return; 
-	else
-	{
-		output << "Calculation was successfull, readed values: " << boolsToString(o) << endl;
-	}
-
-	output << "Application closed" << endl;
-
-
-}
-
-bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
-{
-	if(workbench->SetInput(inputSettings))
-	{
-		output << "Input was set to: " << boolsToString(inputSettings) << endl;
-	}
-	else
-	{
-		output << "Input was not correctly set, workbench invalid status" << endl;
-		return false;
-	}
-}
-
-bool WorkbenchTUI::ReadOutputs(vector<bool>& outputValue)
-{	
-	outputValue = workbench->ReadOutput();
-	return true;
-}
-
-
-bool WorkbenchTUI::OpenFile(std::string path)
-{
-	string s = "\tOpening file " + path;
-	output << s << endl;
-	inputFile.open(path);
-	if (inputFile.is_open())
-	{
-		return true;
-	}
-	else
-	{
-		output << "\tUnable to open file" << std::endl;
-		return false;
-	}
-}
-
-bool WorkbenchTUI::ParsePin(string input, std::pair<string, std::size_t>& pair)
-{
-	if (input[input.size() - 1] != ']')
-	{
-		output << "Wrong format of pin missing \"]\" : " + input;
-		return false;
-	}
-	std::size_t i = input.find_first_of('[');
-	if (i == input.npos)
-	{
-		output << "Wrong format of pin missing \"[\" : " + input;
-		return false;
-	}
-
-	std::string num = input.substr(i + 1, input.size() - i - 2);
-	std::string name = ToUpper(input.substr(0, i));
-	
-	std::size_t t;
-	try {
-		long n = stoul(num, nullptr, 0);
-		t = (std::size_t) n;
-	}
-	catch (invalid_argument)
-	{
-		output << "Invalid id of pin " + num;
-		return false;
-	}
-	pair.first = name;
-	pair.second = t; 
-	return true;
-}
-
-bool WorkbenchTUI::nameSizeCheck(string name)
-{
-	return nameSizeCheck(name.size());
-}
-
-bool WorkbenchTUI::nameSizeCheck(std::size_t size)
-{
-	if (size > maxSizeOfTag)
-	{
-		output << "Gate name is too long (" + to_string(size) + ")" + " max=" + std::to_string(maxSizeOfTag) << endl;
-		return false; 
-	}
-	return true;
-}
-
-bool WorkbenchTUI::nameCharsCheck(string name)
-{
-	if (any_of(name.begin(), name.end(), [this](char c){
-		return any_of(forbidenChars.begin(), forbidenChars.end(),
-			[c](char  fc) { return fc == c; });
-	}))
-	{
-		output << "Name contains one of the forbidden chars \"" + name + "\"";
-		return false; 
-	}
-	else return true;
-
-}
-
-
-std::vector<string> WorkbenchTUI::Split(string s, char delimeter, StringSplitOption option)
-{
-	vector<string> tokens; 
-	string token;
-	istringstream in(s);
-	while(getline(in,token,delimeter))
-	{
-		if(token != "" || option == None )
-			tokens.push_back(token);
-	}
-	return tokens; 
-}
-
-std::string WorkbenchTUI::ToUpper(std::string s)
-{
-	string o; 
-	o.resize(s.size());
-	std::transform(s.begin(), s.end(), o.begin(), toupper);
-	return o;
-}
-
-string WorkbenchTUI::boolsToString(std::vector<bool> v)
-{
-	string s; 
-	transform(v.begin(), v.end(), std::inserter(s, s.begin()), [](bool c)
-	{
-		if (c) return '1'; else return '0';
-	});
-
-	return s;
-}
-
-std::vector<bool> WorkbenchTUI::stringToBools(string s)
-{
-	vector<bool> b; 
-	transform(s.begin(), s.end(), std::inserter(b, b.begin()), [](char c)
-	{
-		if (c == '1') return true; else if (c == '0') return false;
-		else throw runtime_error("UnknownChar");
-	});
-	return b;
-}
-
-

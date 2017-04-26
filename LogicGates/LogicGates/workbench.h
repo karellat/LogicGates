@@ -49,13 +49,16 @@ public:
 	bool SetInput(vector<bool> input);
 	vector<bool> ReadOutput();
 	bool ConstructUserGate(string name);
-	vector<string> ListAllGates(); 
-
+	vector<string> ListAllGates() const; 
+	string GetTestOutput() const { return testOutput; }
+	void ResetWorkbench(bool deleteUDG);
 
 protected:
+	gvertex AddConstGate(bool c);
 	unique_ptr<Graph<unique_ptr<Gate>, unique_ptr<Signal>>> graph;
 	vector<gvertex>   InputGates;
 	vector<gvertex>   OutputGates;
+	vector<gvertex>   ConstGates;
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates; 
 	vector<unique_ptr<UserDefinedGateModel>> UserDefinedGates;
@@ -73,6 +76,7 @@ protected:
 	std::size_t lastID; 
 	std::unordered_map<string, gvertex> VertexNames;
 	std::unordered_map<string, int> TypeNames; 
+	string testOutput;
 
 	
 };
@@ -88,48 +92,10 @@ class WorkbenchStatusException : public runtime_error
 public:
 	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) 
 	:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires " + to_string(wantedStatus)){}	
-	//TODO: Something more explicit
+
 	WorkbenchStatusException(WorkbenchStatus actualStatus)
 		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
 };
 
 
 
-class WorkbenchTUI
-{
-public:
-	WorkbenchTUI(streambuf* output, streambuf* input) : output(output),input(input)
-	{
-		workbench = make_unique<Workbench>();
-	}
-	~WorkbenchTUI();
-	void WaitForFile(); 
-	bool ReadFile(string path);
-	void InteraktiveMode();
-	void PassiveMode(string path,string inputSettings);
-protected:
-	enum StringSplitOption
-	{
-		RemoveEmptyEntries,
-		None
-	};
-	bool SetInput(vector<bool> inputSettings);
-	bool ReadOutputs(vector<bool>& outputValue);
-	std::vector<string> Split(std::string s,char delimeter, StringSplitOption option);
-	std::string ToUpper(std::string s);
-	std::ostream output; 
-	std::istream input;
-	std::ifstream inputFile;
-	std::unique_ptr<Workbench> workbench; 
-	bool nameSizeCheck(string name);
-	bool nameSizeCheck(std::size_t size);
-	bool nameCharsCheck(string name);
-	bool OpenFile(std::string path);
-	string definitionTag = "#GATE";
-	string connectionTag = "#CONNECT";
-	std::size_t maxSizeOfTag = 40;
-	std::string forbidenChars = "\n\t ";
-	bool ParsePin(string input, std::pair<string, std::size_t>& pair);
-	string boolsToString(std::vector<bool> v);
-	std::vector<bool> stringToBools(string s);
-};

@@ -1,0 +1,21 @@
+#GATE	XORAND
+i0	INPUT
+i1	INPUT
+d1	DOUBLE
+d2	DOUBLE
+o0	OUTPUT
+o1	OUTPUT
+X	XOR
+A	AND
+#CONNECT
+i0[0]	->	d1[0]
+i1[0]	->	d2[0]
+d1[0]	->	X[0]
+d2[0]	->	X[1]
+d1[1]	->	A[0]
+d2[1]	->	A[1]
+
+
+X[0]	->	o0[0]
+A[0]	->	o1[0]
+#

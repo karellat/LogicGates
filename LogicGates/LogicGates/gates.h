@@ -45,6 +45,7 @@ public:
 	std::string Name() const { return name; };
 	bool result;
 	std::vector<bool> resultValues; 
+	void  Reset() { result = false; }
 protected:
 	//std::vector<std::unique_ptr<Signal>> output;
 	size_t input_size; 
@@ -201,7 +202,7 @@ public:  NorGate(size_t ID) : Gate(2,1,"Nor Gate",ID) {}
 	std::vector<bool> Update(std::vector<bool> input) override
 		 {
 			 result = true; 
-			 resultValues[0] = !(input[0] && input[1]);
+			 resultValues[0] = !(input[0] || input[1]);
 			 return resultValues; 
 		 }
 };
@@ -220,22 +221,43 @@ public: XnorGate(size_t ID):Gate(2,1,"Xnor Gate",ID){}
 
 };
 
+class DoubleGate : public Gate
+{
+public: DoubleGate(size_t ID) :Gate(1,2,"Double Gate",ID){}
+		~DoubleGate(){}
+	std::vector<bool> Update(std::vector<bool> input) override
+	{
+		result = true; 
+		resultValues[0] = input[0];
+		resultValues[1] = input[0];
+		return resultValues;
+	}
+};
+
 class UserDefinedGate : public Gate
 {
 public:
-	UserDefinedGate(size_t input_size, size_t output_size, std::string name, size_t id): Gate(input_size,output_size,name, id){}
+	UserDefinedGate(size_t input_size, size_t output_size, std::string name, size_t id,Gate * model): Gate(input_size,output_size,name, id), model(model){}
 	~UserDefinedGate() {}
-
-	std::vector<bool> Update(std::vector<bool> input) override { throw new std::runtime_error("Not Implemented yet, UserDefinedGate::Update"); }
+	Gate * model;
+	std::vector<bool> Update(std::vector<bool> input) override { return model->Update(input); }
 };
 
 class UserDefinedGateModel : public Gate
 {
 public: 
-	UserDefinedGateModel(std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph, std::vector<gvertex> InputGates, std::vector<gvertex> OutputGates, std::string name, size_t id)
-		: Gate(InputGates.size(), OutputGates.size(),name,id) {}
-	~UserDefinedGateModel() {throw new std::runtime_error("Not Implemented yet, UserDefinedGate::destructor"); }
+	UserDefinedGateModel(std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph, 
+		std::vector<gvertex> InputGates, std::vector<gvertex> OutputGates, std::vector<gvertex> ConstGates, 
+		std::string name, size_t id)  : Gate(InputGates.size(), OutputGates.size(),name,id), graph(std::move(graph)),inputGates(InputGates),outputGates(OutputGates),constGates(ConstGates) {} 
+	~UserDefinedGateModel() {};
 
-	std::unique_ptr<UserDefinedGate> getGate(size_t id) { throw new std::runtime_error("Not Implemented yet, UserDefinedGateModel::getGate"); }
-	std::vector<bool> Update(std::vector<bool> input) override { throw new std::runtime_error("Not Implemented yet, UserDefinedGateModel::Update"); }
+	std::unique_ptr<UserDefinedGate> getGate(size_t id); 
+	std::vector<bool> Update(std::vector<bool> input) override;
+
+protected:
+	std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph;
+	std::vector<gvertex> inputGates;
+	std::vector<gvertex> outputGates; 
+	std::vector<gvertex> constGates; 
+
 };

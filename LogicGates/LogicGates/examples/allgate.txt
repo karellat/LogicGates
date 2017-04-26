@@ -1,0 +1,54 @@
+#GATE	Allgate
+i0	INPUT
+i1	INPUT
+i2	INPUT
+i3	INPUT
+i4	INPUT
+i5	INPUT
+i6	INPUT
+i7	INPUT
+i8	INPUT
+i9	INPUT
+i10	INPUT
+c1	Const1
+c0	const0
+b	BLANK
+N	NOT
+A	AND
+O	OR
+X	XOR
+NA	NAND
+NO	NOR
+NX	XNOR
+D	DOUBLE
+o0	OUTPUT
+o1	OUTPUT
+o2	OUTPUT
+o3	OUTPUT
+o4	OUTPUT
+o5	OUTPUT
+o6	OUTPUT
+#CONNECT
+i0[0]	->	N[0]
+N[0]	->	D[0]
+D[0]	->	B[0]
+D[1]	->	o0[0]
+C1[0]	->	A[0]
+C0[0]	->	A[1]
+A[0]	->	o1[0]
+i1[0]	->	O[0]
+i2[0]	->	O[1]
+O[0]	->	o2[0]
+i3[0]	->	X[0]
+i4[0]	->	X[1]
+X[0]	->	o3[0]
+i5[0]	->	Na[0]
+i6[0]	->	Na[1]
+Na[0]	->	o4[0]
+i7[0]	->	No[0]
+i8[0]	->	No[1]
+No[0]	->	o5[0]
+i9[0]	->	NX[0]
+i10[0]	->	NX[1]
+NX[0]	->	o6[0]
+#

@@ -1,12 +1,18 @@
 #GATE	MyGate
 i0	INPUT
-i1	INPUT
+i1	Const1
 
-A	AND
-O	OUTPUT
+A	XOR
+N	NOT
+o1	OuTPUT
+o2	OUTPUT
+d	DOUBLE
 
 #CONNECT
 A[0]	<-	i0[0]
 i1[0]	->	A[1]
-A[0]	->	O[0]
+A[0]	->	N[0]
+N[0]	->	d[0]
+d[0]	->	o1[0]
+d[1]	->	o2[0]
 #

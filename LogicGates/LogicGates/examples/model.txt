@@ -2,11 +2,9 @@
 NameOfGate	Type 
 NameOfGate	Type 
 NameOfGate	Type 
-.
-.
-.
+#CONNECT
+NameOfGate[OutputPinID]	->	NameOfGate[InputPinID]
+NameOfGate[OutputPinID]	->	NameOfGate[InputPinID]
+NameOfGate[OutputPinID]	->	NameOfGate[InputPinID]
+NameOfGate[OutputPinID]	->	NameOfGate[InputPinID]
 #
-NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
-NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
-NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
-NameOfGate[OutputPinID] -> NameOfGate[InputPinID]
