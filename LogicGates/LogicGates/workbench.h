@@ -20,8 +20,8 @@ public:
 	//Names for user output
 	const unique_ptr<vector<string>> ListOfNamedVertex() const;
 	const unique_ptr<vector<string>> ListOfType() const;
-	const std::size_t SizeOfInput() const { return inputSize;}
-	const std::size_t SizeOfOutput() const { return outputSize;}
+	const std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
+	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
 	//Actions while constructing	
 	void Add(std::string name, std::string typeName);
 	void Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin);
@@ -31,13 +31,13 @@ public:
 
 	//Actions while constructed
 	// I/0 set up: 
-	bool SetInput(vector<bool> input);
-	unique_ptr<vector<bool>> ReadOutput();
+	void SetInput(vector<bool> input);
+	vector<bool> ReadOutput() const;
 
-	bool ConstructUserGate(string name); 
+	void ConstructUserGate(string name, size_t newInputSize, size_t newOutputSize); 
 	const string& GetTestOutput() const { return testOutput; }
 	//delete current logic network 
-	void ResetWorkbench(bool deleteUDG);
+	void ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize);
 
 protected:
 	//Input & Output Gate
@@ -50,35 +50,26 @@ protected:
 	unique_ptr<Graph<Gate*, unique_ptr<Signal>>> graph;
 	//Dictionary Key: name of the gate type Value: index in the gateTypes
 	unordered_map<string, unique_ptr<Gate>> gateTypes;
-	vector<gvertex>   ConstGates;
+	vector<gvertex>   constGates;
 	//Gates with unconnected pins 
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates;
-	//Tests
-	bool TestOfCorrection();
-	void StatusCheck(WorkbenchStatus s) const;
-	void StatusCheck(vector<WorkbenchStatus> s) const;
 	//Unconnected pins 
 	unordered_map<gvertex, unordered_set<size_t>> unconnectedInPins; 
 	unordered_map<gvertex, unordered_set<size_t>> unconnectedOutPins;
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
-	//Size of input 
-	std::size_t inputSize; 
-	std::size_t outputSize;
-	
 };
 
-class WorkbenchStatusException : public exception
+class invalidworkbenchstatus : public exception
 {
 public:
-	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) 
-	:exception("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires " + to_string(wantedStatus)){}	
-
-	WorkbenchStatusException(WorkbenchStatus actualStatus)
-		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
-};
+	virtual const char* what() const throw()
+	{
+		return "Unexpected status";
+	}
+} istat;
 
 class unexistingtypename : public exception
 {
@@ -88,6 +79,15 @@ public:
 		return "Unexisting typename";
 	}
 } utype;
+
+class invalidnameoftype : public exception
+{
+public: 
+	virtual const char* what() const throw()
+	{
+		return "Choosen type name exists";
+	}
+}itype;
 
 class invalidnameofvertex : public exception
 {

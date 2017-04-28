@@ -229,29 +229,24 @@ public: DoubleGate() :Gate(1,2,"DOUBLE"){}
 	}
 };
 
-class UserDefinedGate : public Gate
-{
-public:
-	UserDefinedGate(size_t input_size, size_t output_size, std::string name, size_t id,Gate * model): Gate(input_size,output_size,name, id), model(model){}
-	~UserDefinedGate() {}
-	Gate * model;
-	std::vector<bool> Update(std::vector<bool> input) override { return model->Update(input); }
-};
+
 
 class UserDefinedGateModel : public Gate
 {
 public: 
-	UserDefinedGateModel(std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph, 
-		std::vector<gvertex> InputGates, std::vector<gvertex> OutputGates, std::vector<gvertex> ConstGates, 
-		std::string name, size_t id)  : Gate(InputGates.size(), OutputGates.size(),name,id), graph(std::move(graph)),inputGates(InputGates),outputGates(OutputGates),constGates(ConstGates) {} 
+	UserDefinedGateModel(std::unique_ptr<Graph<Gate*, unique_ptr<Signal>>> graph, std::unique_ptr<Gate> inputGate, gvertex inputVertex,
+		std::unique_ptr<Gate> outputGate, gvertex outputVertex,vector<gvertex> constGates,string name) 
+		: Gate(inputGate->GetLengthOfInput(),outputGate->GetLengthOfOutput(),name),graph(std::move(graph)), inputGate(std::move(inputGate)),inputVertex(inputVertex)
+	, outputGate(std::move(outputGate)),outputVertex(outputVertex), constGates(std::move(constGates)){} 
 
-	std::unique_ptr<UserDefinedGate> getGate(size_t id); 
 	std::vector<bool> Update(std::vector<bool> input) override;
 
 protected:
-	std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph;
-	std::vector<gvertex> inputGates;
-	std::vector<gvertex> outputGates; 
+	std::unique_ptr<Graph<Gate*, std::unique_ptr<Signal>>> graph;
+	std::unique_ptr<Gate> inputGate; 
+	gvertex inputVertex;
+	std::unique_ptr<Gate> outputGate;
+	gvertex outputVertex; 
 	std::vector<gvertex> constGates; 
 
 };
