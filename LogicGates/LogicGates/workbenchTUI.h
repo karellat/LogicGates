@@ -1,10 +1,11 @@
 #pragma once
 #include "workbench.h"
+#include <memory>
 
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(streambuf* output, streambuf* input) : output(output), input(input), exiting(false), workbench(make_unique<Workbench>())
+	WorkbenchTUI(std::streambuf* output, std::streambuf* input) : output(output), input(input), exiting(false), workbench(std::make_unique<Workbench>())
 	{}
 	~WorkbenchTUI();
 	bool ReadFile(string path);

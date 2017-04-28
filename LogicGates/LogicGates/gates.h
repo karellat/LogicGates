@@ -7,8 +7,8 @@
 
 class Gate;
 class Signal; 
-using gvertex = Vertex<std::unique_ptr<Gate>>*;
-using gedge = Edge<std::unique_ptr<Gate>,std::unique_ptr<Signal>>*; 
+using gvertex = Vertex<Gate*>*; 
+using gedge = Edge<Gate*,std::unique_ptr<Signal>>*; 
 enum Status
 {
 	Zero, One, Floating
@@ -31,8 +31,8 @@ private:
 class Gate {
 public:
 	Gate(){}
-	Gate(size_t inputSize, size_t outputSize, std::string name, size_t id) 
-	: result(false), input_size(inputSize), output_size(outputSize),id(id),name(name)
+	Gate(size_t inputSize, size_t outputSize, std::string name) 
+	: result(false), input_size(inputSize), output_size(outputSize),name(name)
 	{
 		resultValues.resize(outputSize);
 	}
@@ -41,7 +41,6 @@ public:
 	size_t GetLengthOfInput() const { return input_size; }
 	size_t GetLengthOfOutput() const { return output_size; }
 	//Logging info 
-	size_t Id() const { return id; };
 	std::string Name() const { return name; };
 	bool result;
 	std::vector<bool> resultValues; 
@@ -51,22 +50,14 @@ protected:
 	size_t input_size; 
 	size_t output_size; 
 	//Logging info
-	size_t id;
 	std::string name; 
 };
 
 class InputGate : public Gate
 {
 public:
-	InputGate(size_t ID) : Gate(0, 1, "Input Gate", ID){}
+	InputGate(std::size_t inputSize) : Gate(0, inputSize, "INPUT"){}
 	~InputGate() {}
-	void Set(Status s)
-	{
-		result = true;
-		if (s == One) resultValues[0] = true;
-		else if (s == Zero) resultValues[0] = false;
-		else result = false;
-	}
 
 	std::vector<bool> Update(std::vector<bool> input) override
 	{
@@ -74,13 +65,13 @@ public:
 		resultValues = input; 
 		return input;
 	}
+protected:
+	InputGate(string name) : Gate(0, 1, name) {}
 };
-
-
 class OutputGate : public Gate
 {
 public:
-	OutputGate(size_t ID) : Gate(1,0,"Output Gate",ID){}
+	OutputGate(std::size_t outputSize) : Gate(outputSize,0,"OUTPUT"){}
 	~OutputGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override 
@@ -94,7 +85,7 @@ public:
 class BlankGate : public Gate
 {
 public:
-	BlankGate(size_t ID) : Gate(1, 0, "Blank Gate", ID) {}
+	BlankGate() : Gate(1, 0, "BLANK") {}
 	~BlankGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
@@ -106,7 +97,7 @@ public:
 class ConstGate0 : public InputGate
 {
 public:
-	ConstGate0(size_t ID) : InputGate(ID)
+	ConstGate0() : InputGate("CONST0")
 	{
 		result = true;
 		resultValues[0] = false; 
@@ -119,7 +110,11 @@ public:
 class ConstGate1 : public InputGate
 {
 public: 
-	ConstGate1(size_t ID) : InputGate(ID) { result = true; resultValues[0] = true; }
+	ConstGate1() : InputGate("CONST1") 
+	{ 
+		result = true;
+		resultValues[0] = true;
+	}
 	~ConstGate1(){}
 	std::vector<bool> Update(std::vector<bool> input) override { return resultValues; }
 };
@@ -127,7 +122,7 @@ public:
 class NotGate : public Gate
 {
 public:
-	NotGate(size_t ID) : Gate(1,1,"Not Gate", ID){} 
+	NotGate() : Gate(1,1,"NOT"){} 
 	~NotGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override 
@@ -142,7 +137,7 @@ public:
 class OrGate : public Gate
 {
 public: 
-	OrGate(size_t ID) : Gate(2,1,"Or Gate", ID) {} 
+	OrGate() : Gate(2,1,"OR") {} 
 	~OrGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
@@ -156,7 +151,7 @@ public:
 class AndGate : public Gate
 {
 public:
-	AndGate(size_t ID) : Gate(2,1,"And Gate",ID) {} 
+	AndGate() : Gate(2,1,"AND") {} 
 	~AndGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
@@ -170,7 +165,7 @@ public:
 class XorGate : public Gate
 {
 public:
-	XorGate(size_t ID) : Gate(2,1,"Xor Gate",ID) {} 
+	XorGate() : Gate(2,1,"XOR") {} 
 	~XorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override {
@@ -183,7 +178,7 @@ public:
 class NandGate : public Gate
 {
 public:
-	NandGate(size_t ID) : Gate(2,1,"Nand Gate",ID) {} 
+	NandGate() : Gate(2,1,"NAND") {} 
 	~NandGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override 
@@ -196,7 +191,7 @@ public:
 
 class NorGate : public Gate
 {
-public:  NorGate(size_t ID) : Gate(2,1,"Nor Gate",ID) {} 
+public:  NorGate() : Gate(2,1,"NOR") {} 
 		 ~NorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
@@ -209,7 +204,7 @@ public:  NorGate(size_t ID) : Gate(2,1,"Nor Gate",ID) {}
 
 class XnorGate : public Gate
 {
-public: XnorGate(size_t ID):Gate(2,1,"Xnor Gate",ID){}
+public: XnorGate():Gate(2,1,"XNOR"){}
 		~XnorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
@@ -223,7 +218,7 @@ public: XnorGate(size_t ID):Gate(2,1,"Xnor Gate",ID){}
 
 class DoubleGate : public Gate
 {
-public: DoubleGate(size_t ID) :Gate(1,2,"Double Gate",ID){}
+public: DoubleGate() :Gate(1,2,"DOUBLE"){}
 		~DoubleGate(){}
 	std::vector<bool> Update(std::vector<bool> input) override
 	{
@@ -249,7 +244,6 @@ public:
 	UserDefinedGateModel(std::unique_ptr<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>> graph, 
 		std::vector<gvertex> InputGates, std::vector<gvertex> OutputGates, std::vector<gvertex> ConstGates, 
 		std::string name, size_t id)  : Gate(InputGates.size(), OutputGates.size(),name,id), graph(std::move(graph)),inputGates(InputGates),outputGates(OutputGates),constGates(ConstGates) {} 
-	~UserDefinedGateModel() {};
 
 	std::unique_ptr<UserDefinedGate> getGate(size_t id); 
 	std::vector<bool> Update(std::vector<bool> input) override;
