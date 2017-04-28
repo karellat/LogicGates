@@ -124,3 +124,12 @@ public:
 		return "Input and Output are set to 0, no point of creating that gate";
 	}
 } isize;
+
+class invalidinputformat : public exception
+{
+public:
+	virtual const char* what() const throw()
+	{
+		return "Input must have format 1 or 0";
+	}
+} iinput; 
