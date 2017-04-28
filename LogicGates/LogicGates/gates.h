@@ -236,7 +236,7 @@ class UserDefinedGateModel : public Gate
 public: 
 	UserDefinedGateModel(std::unique_ptr<Graph<Gate*, unique_ptr<Signal>>> graph, std::unique_ptr<Gate> inputGate, gvertex inputVertex,
 		std::unique_ptr<Gate> outputGate, gvertex outputVertex,vector<gvertex> constGates,string name) 
-		: Gate(inputGate->GetLengthOfInput(),outputGate->GetLengthOfOutput(),name),graph(std::move(graph)), inputGate(std::move(inputGate)),inputVertex(inputVertex)
+		: Gate(inputGate->GetLengthOfOutput(),outputGate->GetLengthOfInput(),name),graph(std::move(graph)), inputGate(std::move(inputGate)),inputVertex(inputVertex)
 	, outputGate(std::move(outputGate)),outputVertex(outputVertex), constGates(std::move(constGates)){} 
 
 	std::vector<bool> Update(std::vector<bool> input) override;

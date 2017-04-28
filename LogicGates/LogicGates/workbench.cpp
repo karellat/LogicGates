@@ -138,6 +138,7 @@ void Workbench::SetInput(vector<bool> input)
 	//Prepare starting vertex, const & input 
 	unordered_set<gvertex> followingTact; 
 	unordered_set<gvertex> actualTact; 
+	bool outputSet = false; 
 	vector<gedge> inputFrom = graph->edges_from(inputVertex);
 	for (auto i : inputFrom)
 	{
@@ -146,7 +147,7 @@ void Workbench::SetInput(vector<bool> input)
 	}
 	for_each(constGates.begin(), constGates.end(), [&actualTact](gvertex g) {actualTact.insert(g); });
 	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
-	while (true)
+	while (!outputSet)
 	{
 
 		for (auto g : actualTact)
@@ -176,7 +177,12 @@ void Workbench::SetInput(vector<bool> input)
 			if (!evaluated) continue;
 
 			//decided if OutputVertex is set;
-			if (g == outputVertex) break;
+			if (g == outputVertex)
+			{
+				outputSet = true;
+				break;
+
+			}
 			//Count logical function of gate & set outputs
 			vector<bool> outputG = g->value->Update(inputG);
 			vector<gedge> fromG = graph->edges_from(g);
