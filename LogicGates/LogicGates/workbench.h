@@ -60,6 +60,8 @@ protected:
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
+	//if true gate is ready to be created as user defined Gate
+	bool readyForConstruction;
 };
 
 class invalidworkbenchstatus : public exception

@@ -12,7 +12,7 @@ bool WorkbenchTUI::ReadFile(string path)
 	log << "Reading file " + path << endl;
 	string line;
 	if (!OpenFile(path)) return false;
-	//Reading construction file
+	//Reading construction file && construct actual
 	if (!ReadDefinitonHeader()) return false;
 	log << "Header part sucessfully read\n";
 
@@ -33,6 +33,8 @@ bool WorkbenchTUI::ReadFile(string path)
 	{
 		output << "Successfull loaded Gate from file " << endl;
 		inputFile.close();
+		//set status tag, that next construction file reading can create new Gate 
+		readyForConstruction = true;
 		return true;
 	}
 	else
@@ -40,6 +42,8 @@ bool WorkbenchTUI::ReadFile(string path)
 		output << "Ending tag missing, reading file failed" << endl;
 		return false;
 	}
+
+	
 }
 
 void WorkbenchTUI::InteraktiveMode()
@@ -75,14 +79,16 @@ void WorkbenchTUI::InteraktiveMode()
 void WorkbenchTUI::PassiveMode(vector<string> filePaths, vector<vector<bool>> inputSet)
 {
 	//Construct all construction files;
-	bool first = true;
 	for (auto path : filePaths)
 	{
-		//TODO:END OF WRITING
+		if (readyForConstruction)
+		{
+			readyForConstruction = false; 
+			if (!ConstructGate())
+				return;			
+		}
 		if (!ReadFile(path))
 			return;
-		//Create 
-		workbench->ConstructUserGate(name,1,1); 
 	}
 	//Set inputs & read eval if  possible 
 	for (auto input: inputSet)

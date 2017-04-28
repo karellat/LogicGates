@@ -6,7 +6,7 @@
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(std::streambuf* output, std::streambuf* input) : output(output), input(input), exiting(false), workbench(std::make_unique<Workbench>())
+	WorkbenchTUI(std::streambuf* output, std::streambuf* input) : output(output), input(input), exiting(false),readyForConstruction(false), workbench(std::make_unique<Workbench>())
 	{}
 	~WorkbenchTUI()
 	{
@@ -37,13 +37,15 @@ protected:
 	bool OpenFile(std::string path);
 
 	//File reading parse 
-		//Reads the first three line (definition tag,input & output line)  and construct specific input, output
+		//Reads the first three line (definition tag,input & output line)
 	bool ReadDefinitonHeader();
 		//Set name to given type of gate, add the gate to the workbench, ends correctly with connection part tag if any problem of naming or format problem 
 	bool ReadDeclarativeLine();
 		//Set connection between gates in the workbench, ends corretly with  end tag, return false if any problem of connection or format problem 
 	bool ReadConnectionLine(); 
 
+	//Construction 
+	bool ConstructGate();
 
 	// Streams: 
 	std::ostream output;
@@ -72,5 +74,5 @@ protected:
 	bool exiting;
 	bool reseting;
 	bool constructing;
-
+	bool readyForConstruction;
 };
