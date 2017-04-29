@@ -5,6 +5,7 @@
 #include <string>
 #include <numeric>
 #include <assert.h>
+#include <ostream>
 static class freepin : exception
 {
 public:
@@ -111,7 +112,7 @@ class Workbench
 {
 public:
 
-	Workbench(size_t inputSize, size_t outputSize);
+	Workbench(size_t inputSize, size_t outputSize,streambuf* log);
 	WorkbenchStatus status;
 
 	//Names for user output
@@ -130,6 +131,7 @@ public:
 	{
 		
 	}
+
 
 	//Actions while constructed
 	// I/0 set up: 
@@ -166,6 +168,11 @@ protected:
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
 	//TODO: CHECK STATES
-
+	//loging methods 
+	static string boolsToString(const vector<bool>&  bools); 
+	string logEdge(const gedge& edge) const;
+	string logVertexInput(const gvertex& vertex,const vector<bool>& bools);
+	string logVertexOutput(const gvertex& vertex, const vector<bool>& bools);
 };
+
 

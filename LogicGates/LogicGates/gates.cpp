@@ -29,7 +29,6 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
 	while (!outputSet)
 	{
-
 		for (auto g : actualTact)
 		{
 			//Read inputs, if any of them  floating add vertex to  following tact

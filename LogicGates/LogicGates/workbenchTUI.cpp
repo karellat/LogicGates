@@ -1,5 +1,6 @@
 #include "workbenchTUI.h"
 #include <iterator>
+#include <iostream>
 
 using pin = std::pair<std::string, std::size_t>;
 
@@ -285,7 +286,7 @@ bool WorkbenchTUI::ReadDefinitonHeader()
 	}
 	else
 	{
-		workbench = make_unique<Workbench>(newInputSize, newOutputSize);
+		workbench = make_unique<Workbench>(newInputSize, newOutputSize,std::cin.rdbuf());
 	}
 
 	//Change name 

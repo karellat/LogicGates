@@ -1,8 +1,10 @@
 #include "workbench.h"
+#include <iostream>
 
 
-Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruction)
+Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log) : status(UnderConstruction), log(log)
 {
+	loging = false;
 	if(outputSize == 0 )
 	{
 		throw isize; 
@@ -143,23 +145,38 @@ void Workbench::ConstructBench()
 //Simulate evaluation of the logical network 
 void Workbench::SetInput(const vector<bool>& input)
 {
+	//Clean to output signals
+	vector<gedge> toOutput; 
+	toOutput = graph->edges_to(outputVertex);
+	for (auto i: toOutput)
+	{
+		i->value->status = Floating;
+	}
 	//Prepare starting vertex, const & input 
 	unordered_set<gvertex> followingTact; 
 	unordered_set<gvertex> actualTact; 
 	bool outputSet = false; 
 	vector<gedge> inputFrom = graph->edges_from(inputVertex);
+	if (loging)
+		std::cout << logVertexInput(inputVertex, input) << endl;
 	for (auto i : inputFrom)
 	{
 		i->value->status = input[i->value->fromID] ? One : Zero;
+		if (loging)
+			std::cout <<logEdge(i) << endl;
 		actualTact.insert(i->to);
 	}
 	for (auto c : constGates)
 	{
+		if (loging)
+			std::cout << "Vertex: " << c->value->Name() << endl;
 		vector<gedge> constFrom = graph->edges_from(c);
 		for (auto i : constFrom)
 		{
 			vector<bool> blank; 
 			i->value->status = c->value->Update(blank)[0] ? One : Zero;
+			if(loging)
+				std::cout << logEdge(i) << endl;
  			actualTact.insert(i->to);
 		}
 	}
@@ -201,7 +218,16 @@ void Workbench::SetInput(const vector<bool>& input)
 
 			}
 			//Count logical function of gate & set outputs
+			if (loging)
+				std::cout << logVertexInput(g, inputG);
 			vector<bool> outputG = g->value->Update(inputG);
+			//Clean value from ingoing signal 
+			for (auto i : toG)
+			{
+				i->value->status = Floating;
+			}
+			if (loging)
+				std::cout << logVertexOutput(g, outputG);
 			vector<gedge> fromG = graph->edges_from(g);
 			for (auto i : fromG)
 			{
@@ -213,7 +239,11 @@ void Workbench::SetInput(const vector<bool>& input)
 				{
 					i->value->status = Zero;
 				}
-				followingTact.insert(i->to);
+				if(loging)
+					std::cout << logEdge(i) << endl;
+				//if no discovered vertex add to the following tact
+				if (actualTact.find(i->to) == actualTact.end())
+					followingTact.insert(i->to);
 			}
 
 		}
@@ -305,5 +335,47 @@ void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOu
 	{
 		out.insert(i);
 	}
+}
+
+string Workbench::boolsToString(const vector<bool>& bools)
+{
+	string s; 
+	for (size_t i = 0; i < bools.size(); i++)
+	{
+		if (bools[i])
+			s.push_back('1');
+		else
+			s.push_back('0');
+	}
+	return s;
+}
+
+string Workbench::logEdge(const gedge& edge) const
+{
+	string o; 
+	o = "\tSet new Edge: " + edge->from->value->Name() + '(' + std::to_string(edge->value->fromID) + ')' + " ----";
+	if (edge->value->status == One)
+		o += "1";
+	else if (edge->value->status == Zero)
+		o += "0";
+	else
+		o += "F";
+	o += "----> " + edge->to->value->Name() + '(' + std::to_string(edge->value->toID) + ')' + "\n";
+
+	return o;
+}
+
+string Workbench::logVertexInput(const gvertex& vertex,const vector<bool>& bools)
+{
+	string o; 
+	o = "Vertex: " + vertex->value->Name() + " gets input: " + boolsToString(bools) + "\n";
+	return o;
+}
+
+string Workbench::logVertexOutput(const gvertex& vertex, const vector<bool>& bools)
+{
+	string o;
+	o = "Vertex: " + vertex->value->Name() + " counts output: " + boolsToString(bools) + "\n";
+	return o;
 }
 
