@@ -13,9 +13,9 @@ static void WriteStringVector(vector<string> list)
 }
 
 
-bool argumentTest(char* text)
+bool argumentTest(string text)
 {
-	return strcmp(text, "-i") || strcmp(text, "-f") || strcmp(text, "-h") || strcmp(text, "-d");
+	return (text ==  "-i") || (text == "-f") || (text == "-h") || (text == "-d");
 }
 
 vector<bool> stringToBools(string text)
@@ -49,40 +49,41 @@ int main(int argc, char *argv[])
 	else
 	{
 		size_t index = 1;
-		//Parse parameters: 
+		//Parse parameters:
 		while(index < argc)
 		{
-			if(strcmp(argv[index],"-d"))
+			if (strcmp(argv[index], "-d") == 0)
 			{
 				debugMode = true; 
 				index++;
 			}
-			else if(strcmp(argv[index],"-f"))
+			else if(strcmp(argv[index],"-f") == 0)
 			{
 				index++;
 				while(index < argc && !argumentTest(argv[index]))
 				{
 					fileNames.push_back(argv[index]);
 					index++;
+					
 				}
 			}
-			else if(strcmp(argv[index],"-i"))
-			{
+			else if (strcmp(argv[index], "-i") == 0) {
 				index++;
 				while (index < argc && !argumentTest(argv[index]))
 				{
 					try {
-						inputs.push_back(stringToBools(std::move(argv[index])));
+						inputs.push_back(stringToBools(argv[index]));
 					}
 					catch(invalidinputformat& e)
 					{
 						std::cout << e.what() << endl;
 						return 1;
 					}
-						index++;
+					index++;
+
 				}
 			}
-			else if(strcmp(argv[index],"-h"))
+			else if (strcmp(argv[index], "-h") == 0)
 			{
 				index++;
 				std::cout << "Logic Gates" << endl;
@@ -93,10 +94,10 @@ int main(int argc, char *argv[])
 				std::cout << "\t-i [STRING..] \tinputs for last constructed logic network, 1 - for true, 0 - for false, if wrong format throws exception " << endl; 
 			}
 		}
+		cout << "arguments parsed" << endl;
 		//Run workbench in passive mode: 
 		w->PassiveMode(std::move(fileNames), std::move(inputs));
 	}
-
-	w.release();
+	getline(cin, blank);
 }
 

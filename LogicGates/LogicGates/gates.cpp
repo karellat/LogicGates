@@ -84,7 +84,7 @@ std::vector<bool> UserDefinedGateModel::Update(std::vector<bool> input)
 		else if (i->value->status == Zero)
 			outputBool[i->value->toID] = false;
 		else
-			throw new std::runtime_error("Unexpected status of signal"); //TODO: create my own expception
+			throw isignal;
 	}
 
 	return std::move(outputBool);

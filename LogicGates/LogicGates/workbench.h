@@ -131,6 +131,7 @@ protected:
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
+	//TODO: CHECK STATES
 
 };
 

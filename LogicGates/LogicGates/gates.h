@@ -4,6 +4,14 @@
 #include "graph.h" 
 
 
+static class invalidsignalstatus:exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Floting status of input in unexpected situation\n";
+	}
+} isignal;
 
 class Gate;
 class Signal; 
@@ -187,7 +195,6 @@ public:
 class NorGate : public Gate
 {
 public:  NorGate() : Gate(2,1,"NOR") {} 
-		 ~NorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
 		 {
@@ -213,7 +220,6 @@ public: XnorGate():Gate(2,1,"XNOR"){}
 class DoubleGate : public Gate
 {
 public: DoubleGate() :Gate(1,2,"DOUBLE"){}
-		~DoubleGate(){}
 	std::vector<bool> Update(std::vector<bool> input) override
 	{
 		result = true; 
@@ -232,7 +238,7 @@ public:
 		std::unique_ptr<Gate> outputGate, gvertex outputVertex,vector<gvertex> constGates,string name) 
 		: Gate(inputGate->GetLengthOfOutput(),outputGate->GetLengthOfInput(),name),graph(std::move(graph)), inputGate(std::move(inputGate)),inputVertex(inputVertex)
 	, outputGate(std::move(outputGate)),outputVertex(outputVertex), constGates(std::move(constGates)){} 
-
+	
 	std::vector<bool> Update(std::vector<bool> input) override;
 
 protected:
