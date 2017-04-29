@@ -125,7 +125,11 @@ public:
 	void Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin);
 	//Construction: 
 	void ConstructBench();
-
+	//Activate logging 
+	void Log(streambuf* log)
+	{
+		
+	}
 
 	//Actions while constructed
 	// I/0 set up: 
@@ -138,6 +142,9 @@ public:
 	void ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize);
 
 protected:
+	//loging info
+	bool loging; 
+	std::ostream log; 
 	//Input & Output Gate
 	unique_ptr<Gate> inputGate; 
 	unique_ptr<Gate> outputGate;

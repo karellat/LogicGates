@@ -222,7 +222,6 @@ void Workbench::SetInput(const vector<bool>& input)
 	}
 	status = Calculated;
 }
-
 //Return  read output 
 vector<bool> Workbench::ReadOutput() const
 {
