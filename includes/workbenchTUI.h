@@ -19,7 +19,8 @@ public:
 	}
 
 	void InteraktiveMode();
-	void PassiveMode(vector<string> filePaths, vector<vector<bool>> inputSet);
+	
+	void PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet,bool tryAllInputs);
 protected:
 	bool logTag = true;
 	enum StringSplitOption
@@ -28,17 +29,17 @@ protected:
 		None
 	};
 	//Read construction file, fill  the log file, if any problem with construction return false
-	bool ReadFile(string path);
+	bool ReadFile(const string& path);
 	//Interactive mode of setting inputs to gate
 	void InteractiveSeting();
 	//Interactive mode of reading and constructing construction files 
 	bool InteractiveReadingFile();
 	//Set input of the logical network 
-	bool SetInput(vector<bool> inputSettings);
+	bool SetInput(const vector<bool>& inputSettings);
 	//Reads output from network
-	bool ReadOutputs(vector<bool>& outputValue);
+	bool ReadOutputs(vector<bool>& outputValue) const;
 	//Check if file exists and open it
-	bool OpenFile(std::string path);
+	bool OpenFile(const std::string& path);
 
 	//File reading parse 
 		//Reads the first three line (definition tag,input & output line)
@@ -50,7 +51,10 @@ protected:
 
 	//Construction 
 		//Construct user defined Gate
-	bool ConstructGate(size_t newInputSize, size_t newOutputSize, string actualName);
+	bool ConstructGate(size_t newInputSize, size_t newOutputSize, const string& actualName);
+	//Generate all possible inputs
+	vector<vector<bool>> GenerateInput(const size_t size_of_input);
+
 
 	// Streams: 
 	std::ostream output;
@@ -61,22 +65,22 @@ protected:
 	std::unique_ptr<Workbench> workbench;
 	string name;
 	//String parsing 
-	bool nameSizeCheck(string name);
+	bool nameSizeCheck(const string& name);
 	bool nameSizeCheck(std::size_t size);
-	bool nameCharsCheck(string name);
+	bool nameCharsCheck(const string& name);
 	string definitionTag = "#GATE";
 	string connectionTag = "#CONNECT";
 	std::size_t maxSizeOfTag = 40;
 	std::string forbidenChars = "\n\t ";
 	string inputTag = "#INPUT";
 	string outputTag = "#OUTPUT"; 
-	std::vector<string> Split(std::string s, char delimeter, StringSplitOption option);
-	std::string ToUpper(std::string s);
-	bool ParsePin(string input, std::pair<string, std::size_t>& pair);
-	string  boolsToString(std::vector<bool>& v);
-	bool stringToBools(string s, std::vector<bool>& b);
-	bool ShowHelp(string word);	
-	bool ParseKeyWords(string word); 
+	std::vector<string> Split(const std::string& s, char delimeter, StringSplitOption option);
+	std::string ToUpper(const std::string& s);
+	bool ParsePin(const string& input, std::pair<string, std::size_t>& pair);
+	string  boolsToString(const std::vector<bool>& v);
+	bool stringToBools(const string& s, std::vector<bool>& b);
+	bool ShowHelp(const string& word);	
+	bool ParseKeyWords(const string& word); 
 	//status tag 
 	bool exiting;
 	bool reseting;

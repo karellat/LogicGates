@@ -6,11 +6,9 @@ APPNAME	:= bin/main
 SOURCES	:= $(wildcard src/*.cpp *.cpp)
 OBJECTS	:= $(patsubst  src%, obj%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $(SOURCES))))
 SRC := src 
+EXAMDIR  := examples
 
-
-
-
-all: $(OBJECTS)
+all: init convert $(OBJECTS)
 	$(CC) $(CFLAGS) $(INC) $(OBJECTS) -o $(APPNAME)
 	./bin/main
 
@@ -24,6 +22,9 @@ clean:
 	rm -rf obj/*
 	rm -rf *.o
 	rm -f $(APPNAME)
-
-
-
+init: 
+	test -e bin || mkdir bin 
+	test -e obj || mkdir obj
+convert:
+	@bash convertor $(EXAMDIR)
+	@echo "Converting eol of examples" 

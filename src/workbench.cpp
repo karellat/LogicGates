@@ -1,6 +1,6 @@
 #include "workbench.h"
 
-
+#define Debug
 
 Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruction)
 {
@@ -19,7 +19,7 @@ Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruc
 	gateTypes["XOR"] = (make_unique<XorGate>());
 	gateTypes["NAND"] = (make_unique<NandGate>());
 	gateTypes["NOR"] = (make_unique<NorGate>());
-	gateTypes["XOR"] = (make_unique<XnorGate>());
+	gateTypes["XNOR"] = (make_unique<XnorGate>());
 	gateTypes["DOUBLE"] = (make_unique<DoubleGate>());
 
 	//prepare io gates, add their names 
@@ -43,11 +43,13 @@ Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruc
 	}
 
 	
+	
 }
 //List all names of actual network 
 const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
 	unique_ptr<vector<string>> out; 
+	//TODO: Fix
 	//for_each(vertexNames.begin(), vertexNames.end(), [&out](pair<string, Gate*>& i) {out->push_back(i.first); });
 	return std::move(out);
 }
@@ -55,12 +57,13 @@ const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 const unique_ptr<vector<string>> Workbench::ListOfType() const
 {
 	unique_ptr<vector<string>> out; 
+	//TODO: Fix
 	//for_each(gateTypes.begin(), gateTypes.end(), [&out](pair<string,unique_ptr<Gate>> p) {out->push_back(p.first); });
 	return std::move(out);
 }
 
 //Add new gate to the network with "name" of "typeName". If typeName does not exist as a type throws out_of_range exception. If vertex named same as name throws. 
-void Workbench::Add(std::string name, std::string typeName)
+void Workbench::Add(const std::string& name, const std::string& typeName)
 {
 	//Check existing type and unambiguity of name
 	if (gateTypes.find(typeName) == gateTypes.end())
@@ -82,7 +85,7 @@ void Workbench::Add(std::string name, std::string typeName)
 	}
 }
 //Connect fromName vertex to toName vertex using given pins IDs - if names of vector does not exists throw 
-void Workbench::Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin)
+void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin)
 {
 	//Find vertex
 	if (vertexNames.find(fromName) == vertexNames.end())
@@ -94,9 +97,13 @@ void Workbench::Connect(std::string fromName, std::size_t fromPin, std::string t
 	gvertex to = vertexNames[toName];
 
 	//check if pins are free
-	if (unconnectedInPins[from].find(fromPin) == unconnectedInPins[from].end())
+    //TODO: remove debug code;
+	//unordered_set<size_t>& fromP = unconnectedOutPins[from];
+	//unordered_set<size_t>& toP = unconnectedInPins[to];
+
+	if (unconnectedInPins[to].find(toPin) == unconnectedInPins[to].end())
 		throw opin; 
-	if (unconnectedOutPins[to].find(toPin) == unconnectedOutPins[to].end())
+	if (unconnectedOutPins[from].find(fromPin) == unconnectedOutPins[from].end())
 		throw opin; 
 
 	//make connection between from and  to 
@@ -134,7 +141,7 @@ bool Workbench::ConstructBench()
 }
 
 //Simulate evaluation of the logical network 
-void Workbench::SetInput(vector<bool> input)
+void Workbench::SetInput(const vector<bool>& input)
 {
 	//Prepare starting vertex, const & input 
 	unordered_set<gvertex> followingTact; 
@@ -228,7 +235,7 @@ vector<bool> Workbench::ReadOutput() const
 	return std::move(outputBool);
 }
 
-void Workbench::ConstructUserGate(string name, size_t newInputSize, size_t newOutputSize)
+void Workbench::ConstructUserGate(const string& name, size_t newInputSize, size_t newOutputSize)
 {
 	if (status == UnderConstruction)
 		throw istat;

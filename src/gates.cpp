@@ -2,7 +2,7 @@
 #include <set>
 
 
-std::vector<bool> UserDefinedGateModel::Update(std::vector<bool> input)
+std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 {
 	//TODO:Same code as workbench
 	//Prepare starting vertex, const & input 

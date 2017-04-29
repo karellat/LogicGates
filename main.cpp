@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <memory>
@@ -11,11 +12,9 @@ static void WriteStringVector(vector<string> list)
 {
 	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl << endl; });
 }
-
-
-bool argumentTest(char* text)
+bool argumentTest(string text)
 {
-	return strcmp(text, "-i") || strcmp(text, "-f") || strcmp(text, "-h") || strcmp(text, "-d");
+	return (text ==  "-i") || (text == "-f") || (text == "-h") || (text == "-d") || (text == "-a");
 }
 
 vector<bool> stringToBools(string text)
@@ -42,6 +41,7 @@ int main(int argc, char *argv[])
 	bool debugMode = false;
 	vector<string> fileNames;
 	vector<vector<bool>>   inputs;
+	bool tryAllInputs = false;
 
 
 	if (argc == 1)
@@ -49,40 +49,41 @@ int main(int argc, char *argv[])
 	else
 	{
 		size_t index = 1;
-		//Parse parameters: 
+		//Parse parameters:
 		while(index < argc)
 		{
-			if(strcmp(argv[index],"-d"))
+			if (std::strcmp(argv[index], "-d") == 0)
 			{
 				debugMode = true; 
 				index++;
 			}
-			else if(strcmp(argv[index],"-f"))
+			else if(std::strcmp(argv[index],"-f") == 0)
 			{
 				index++;
 				while(index < argc && !argumentTest(argv[index]))
 				{
 					fileNames.push_back(argv[index]);
 					index++;
+					
 				}
 			}
-			else if(strcmp(argv[index],"-i"))
-			{
+			else if (std::strcmp(argv[index], "-i") == 0) {
 				index++;
 				while (index < argc && !argumentTest(argv[index]))
 				{
 					try {
-						inputs.push_back(stringToBools(std::move(argv[index])));
+						if(!tryAllInputs) inputs.push_back(stringToBools(argv[index]));
 					}
 					catch(invalidinputformat& e)
 					{
 						std::cout << e.what() << endl;
 						return 1;
 					}
-						index++;
+					index++;
+
 				}
 			}
-			else if(strcmp(argv[index],"-h"))
+			else if (std::strcmp(argv[index], "-h") == 0)
 			{
 				index++;
 				std::cout << "Logic Gates" << endl;
@@ -90,12 +91,18 @@ int main(int argc, char *argv[])
 				std::cout << "\tArguments: " << endl; 
 				std::cout << "\t-h \tprint help " << endl;
 				std::cout << "\t-f [file..] \tconstruction files given to construct in given order" << endl; 
-				std::cout << "\t-i [STRING..] \tinputs for last constructed logic network, 1 - for true, 0 - for false, if wrong format throws exception " << endl; 
+				std::cout << "\t-i [STRING..] \tinputs for last constructed logic network, 1 - for true, 0 - for false, if wrong format throws exception " << endl;
+				std::cout << "\t-a \t generate all possible outputs and ignore previous inputs read afer -i" << endl;
+			}
+			else if (std::strcmp(argv[index],"-a") == 0)
+			{
+				index++;
+				tryAllInputs = true;
 			}
 		}
 		//Run workbench in passive mode: 
-		w->PassiveMode(std::move(fileNames), std::move(inputs));
+		w->PassiveMode(std::move(fileNames), std::move(inputs),tryAllInputs);
 	}
-
+	getline(cin, blank);
 }
 

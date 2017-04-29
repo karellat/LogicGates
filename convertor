@@ -1,0 +1,9 @@
+#!/bin/sh 
+#Convertor from CRLF to LF 
+D=$(mktemp -d)
+
+for i in $(ls $1); do
+	cat "$1/$i" | tr -d '\r' > "$D/$i"
+	mv  "$D/$i" "$1/$i" 
+done
+rm -rf "$D"

@@ -3,7 +3,7 @@
 
 using pin = std::pair<std::string, std::size_t>;
 
-bool WorkbenchTUI::ReadFile(string path)
+bool WorkbenchTUI::ReadFile(const string& path)
 {
 	log << "Reading file " + path << endl;
 	string line;
@@ -20,28 +20,18 @@ bool WorkbenchTUI::ReadFile(string path)
 
 
 	//ending tag check
-	if (line[0] == '#')
-	{
-		output << "Successfull loaded Gate from file " << endl;
-		inputFile.close();
-		//set status tag, that next construction file reading can create new Gate 
-		readyForConstruction = true;
-		return true;
-	}
-	else
-	{
-		output << "Ending tag missing, reading file failed" << endl;
-		return false;
-	}
-
-	
+	output << "Successfull loaded Gate from file " << endl;
+	inputFile.close();
+	//set status tag, that next construction file reading can create new Gate 
+	readyForConstruction = true;
+	return true;
 }
 
 void WorkbenchTUI::InteraktiveMode()
 {
 }
 
-void WorkbenchTUI::PassiveMode(vector<string> filePaths, vector<vector<bool>> inputSet)
+void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet, bool tryAllinputs)
 {
 	//Construct all construction files;
 	for (auto path : filePaths)
@@ -49,16 +39,36 @@ void WorkbenchTUI::PassiveMode(vector<string> filePaths, vector<vector<bool>> in
 		if (!ReadFile(path))
 			return;
 	}
+	//Generate vector of all possible inputs of given lenght or use given vector of bools
 	//Set inputs & read eval if  possible 
-	for (auto input: inputSet)
+	if(tryAllinputs)
 	{
-		if(SetInput(input))
+		vector<vector<bool>> generatedInputSet = GenerateInput(workbench->SizeOfInput());
+		for (auto input : generatedInputSet)
 		{
-	 		vector<bool> o; 
-			if (ReadOutputs(o))
+			if (SetInput(input))
 			{
-				output << "OUTPUT: " << boolsToString(o);
-				log << "OUTPUT: " << boolsToString(o); 
+				vector<bool> o;
+				if (ReadOutputs(o))
+				{
+					output << "OUTPUT: " << boolsToString(o) << endl;
+					//log << "OUTPUT: " << boolsToString(o); 
+				}
+			}
+		}
+
+	}
+	else {
+		for (auto input : inputSet)
+		{
+			if (SetInput(input))
+			{
+				vector<bool> o;
+				if (ReadOutputs(o))
+				{
+					output << "OUTPUT: " << boolsToString(o) << endl;
+					//log << "OUTPUT: " << boolsToString(o); 
+				}
 			}
 		}
 	}
@@ -123,11 +133,11 @@ bool WorkbenchTUI::InteractiveReadingFile()
 	return true;
 }
 
-bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
+bool WorkbenchTUI::SetInput(const vector<bool>& inputSettings)
 {
 	if (inputSettings.size() != workbench->SizeOfInput())
 	{
-		output << "Invalid size of input " << endl;
+		log << "Invalid size of input " << endl;
 		return false;
 	}
 	try {
@@ -139,17 +149,18 @@ bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
 	catch(exception& e)
 	{
 		log << "Invalid output or situation: " << e.what() << endl;
+		return false;
 	}
 }
 
-bool WorkbenchTUI::ReadOutputs(vector<bool>& outputValue)
+bool WorkbenchTUI::ReadOutputs(vector<bool>& outputValue) const
 {
 	outputValue = workbench->ReadOutput();
 	return true;
 }
 
 
-bool WorkbenchTUI::OpenFile(std::string path)
+bool WorkbenchTUI::OpenFile(const std::string& path)
 {
 	log << "\tOpening file " + path << endl;
 	inputFile.open(path);
@@ -381,6 +392,7 @@ bool WorkbenchTUI::ReadConnectionLine()
 		catch(exception& e)
 		{
 			log << "Invalid connection: " << e.what() << endl;
+			log << "This line: " << line;
 			return false;
 		}
 
@@ -400,7 +412,7 @@ bool WorkbenchTUI::ReadConnectionLine()
 	return true;
 }
 
-bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, string actualName)
+bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, const string& actualName)
 {
 	try {
 		workbench->ConstructUserGate(actualName, newInputSize, newOutputSize);
@@ -413,8 +425,35 @@ bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, stri
 	return true;
 }
 
+vector<vector<bool>> WorkbenchTUI::GenerateInput(const size_t size_of_input)
+{
+	//bit adding
+	vector<vector<bool>> out; 
+	vector<bool> v; 
+	for (size_t i=0;i< size_of_input; i++)
+	{
+		v.push_back(false);
+	}
+	out.push_back(v);
+	while (any_of(v.cbegin(), v.cend(), [](bool b) {return !b; }))
+	{
+		size_t index = 0;
+		while(v[index])
+		{
+			v[index] = false; 
+			index++;
+		}
+		v[index] = true;
+		out.push_back(v);
+	}
 
-bool WorkbenchTUI::ParsePin(string input, std::pair<string, std::size_t>& pair)
+
+
+	return std::move(out);
+}
+
+
+bool WorkbenchTUI::ParsePin(const string& input, std::pair<string, std::size_t>& pair)
 {
 	if (input[input.size() - 1] != ']')
 	{
@@ -446,7 +485,7 @@ bool WorkbenchTUI::ParsePin(string input, std::pair<string, std::size_t>& pair)
 	return true;
 }
 
-bool WorkbenchTUI::nameSizeCheck(string name)
+bool WorkbenchTUI::nameSizeCheck(const string& name)
 {
 	return nameSizeCheck(name.size());
 }
@@ -461,7 +500,7 @@ bool WorkbenchTUI::nameSizeCheck(std::size_t size)
 	return true;
 }
 
-bool WorkbenchTUI::nameCharsCheck(string name)
+bool WorkbenchTUI::nameCharsCheck(const string& name)
 {
 	if (any_of(name.begin(), name.end(), [this](char c) {
 		return any_of(forbidenChars.begin(), forbidenChars.end(),
@@ -475,7 +514,7 @@ bool WorkbenchTUI::nameCharsCheck(string name)
 
 }
 
-std::vector<string> WorkbenchTUI::Split(string s, char delimeter, StringSplitOption option)
+std::vector<string> WorkbenchTUI::Split(const std::string& s, char delimeter, StringSplitOption option)
 {
 	vector<string> tokens;
 	string token;
@@ -488,7 +527,7 @@ std::vector<string> WorkbenchTUI::Split(string s, char delimeter, StringSplitOpt
 	return tokens;
 }
 
-std::string WorkbenchTUI::ToUpper(std::string s)
+std::string WorkbenchTUI::ToUpper(const std::string& s)
 {
 	string o;
 	o.resize(s.size());
@@ -497,7 +536,7 @@ std::string WorkbenchTUI::ToUpper(std::string s)
 	return std::move(o);
 }
 
-string WorkbenchTUI::boolsToString(std::vector<bool>& v)
+string WorkbenchTUI::boolsToString(const std::vector<bool>& v)
 {
 	string s;
 	transform(v.cbegin(), v.cend(), std::inserter(s, s.begin()), [](bool c)
@@ -508,7 +547,7 @@ string WorkbenchTUI::boolsToString(std::vector<bool>& v)
 	return std::move(s); 
 }
 
-bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
+bool WorkbenchTUI::stringToBools(const string& s, std::vector<bool>& b)
 {
 	b.clear();
 	try
@@ -527,7 +566,7 @@ bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
 	return true;
 }
 
-bool WorkbenchTUI::ParseKeyWords(string word)
+bool WorkbenchTUI::ParseKeyWords(const string& word)
 {
 	if (word == "exit" || word == "q" || word == "kill" || word == "quit")
 
@@ -551,7 +590,7 @@ bool WorkbenchTUI::ParseKeyWords(string word)
 
 }
 
-bool WorkbenchTUI::ShowHelp(string word)
+bool WorkbenchTUI::ShowHelp(const string& word)
 {
 	if(word == "help" || word == "h" || word == "man")
 	{
