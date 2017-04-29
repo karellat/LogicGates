@@ -55,7 +55,7 @@ struct Graph {
 		for (auto&& edge : edges)
 			if (edge.get()->from == a)
 				output.push_back(edge.get());
-		return output; 
+		return std::move(output); 
 	}
 
 	vector<etype *> edges_to(vtype* a)
@@ -64,7 +64,7 @@ struct Graph {
 		for (auto&& edge : edges)
 			if (edge.get()->to == a)
 				output.push_back(edge.get());
-		return output;
+		return std::move(output);
 	}
 
 	unordered_set<vtype *> verticies_from(vtype* a)
@@ -74,7 +74,7 @@ struct Graph {
 		{
 			vs.insert(i->to);
 		}
-		return vs;
+		return std::move(vs);
 	}
 
 

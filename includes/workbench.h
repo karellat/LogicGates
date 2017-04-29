@@ -1,17 +1,81 @@
 #pragma once
 #include "gates.h"
 #include <memory>
-#include <sstream>
-#include <list>
-#include <fstream>
-#include <string>
-#include <set>
-#include <iterator>
-#include <numeric>
-#include <map>
 #include <unordered_map>
-#include <locale>
+#include <string>
+#include <numeric>
 
+static class invalidworkbenchstatus : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexpected status";
+	}
+} istat;
+
+static class unexistingtypename : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexisting typename";
+	}
+} utype;
+
+static class invalidnameoftype : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Choosen type name exists";
+	}
+}itype;
+
+static class invalidnameofvertex : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Same name of vertex exists";
+	}
+} iname;
+
+static class unexistingnameofvertex : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexisting vertex name";
+	}
+} uname;
+
+static class occupiedpin : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Connected pin";
+	}
+} opin;
+
+static class invalidsizeofio : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Input and Output are set to 0, no point of creating that gate";
+	}
+} isize;
+
+static class invalidinputformat : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Input must have format 1 or 0";
+	}
+} iinput;
 enum WorkbenchStatus
 {
 	UnderConstruction, Constructed, Calculating, Calculated
@@ -20,82 +84,53 @@ class Workbench
 {
 public:
 
-	Workbench();
-	~Workbench();
+	Workbench(size_t inputSize, size_t outputSize);
+	WorkbenchStatus status;
 
-	WorkbenchStatus status = UnderConstruction;
-
-	//Output
-	vector<string> ListOfFreeInputGates();
-	vector<string> ListOfFreeOutputGates();
-	vector<string> ListOfUserDefinedGates();
-	vector<string> ListOfNamedVertex();
-	const vector<string> & ListOfStandartGates() const;
-	std::size_t SizeOfInput() const { return InputGates.size(); }
-	std::size_t SizeOfOutput() const { return OutputGates.size(); }
+	//Names for user output
+	const unique_ptr<vector<string>> ListOfNamedVertex() const;
+	const unique_ptr<vector<string>> ListOfType() const;
+	const std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
+	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
 	//Actions while constructing
-	bool Connect(const std::size_t & freeInputPosition,const std::size_t & freeInputID,
-		const std::size_t & freeOutputPosition, const std::size_t & freeOutputID);
-	bool Connect(gvertex from, gvertex to, std::size_t fromPin, std::size_t toPin);
-	gvertex Add(const std::size_t & num);
-	gvertex GetType(string typeName);
-	bool GetVertex(string name, gvertex& v);
-	bool AddNamedGate(string gateName, string typeName);
-	bool AddUserDefineGate(const std::size_t & positionInList);
+	//Add new vertex of typeName called name 
+	void Add(std::string name, std::string typeName);
+	void Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin);
+	//Construction: 
 	bool ConstructBench();
-	gvertex AddInputGate();
-	gvertex AddOutputGate();
+
+
 	//Actions while constructed
-	bool SetInput(vector<bool> input);
-	vector<bool> ReadOutput();
-	bool ConstructUserGate(string name);
-	vector<string> ListAllGates() const; 
-	string GetTestOutput() const { return testOutput; }
-	void ResetWorkbench(bool deleteUDG);
+	// I/0 set up: 
+	void SetInput(vector<bool> input);
+	vector<bool> ReadOutput() const;
+
+	void ConstructUserGate(string name, size_t newInputSize, size_t newOutputSize); 
+	const string& GetTestOutput() const { return testOutput; }
+	//delete current logic network 
+	void ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize);
 
 protected:
-	gvertex AddConstGate(bool c);
-	unique_ptr<Graph<unique_ptr<Gate>, unique_ptr<Signal>>> graph;
-	vector<gvertex>   InputGates;
-	vector<gvertex>   OutputGates;
-	vector<gvertex>   ConstGates;
+	//Input & Output Gate
+	unique_ptr<Gate> inputGate; 
+	unique_ptr<Gate> outputGate;
+	gvertex inputVertex; 
+	gvertex outputVertex; 
+
+	//Graph
+	unique_ptr<Graph<Gate*, unique_ptr<Signal>>> graph;
+	//Dictionary Key: name of the gate type Value: index in the gateTypes
+	unordered_map<string, unique_ptr<Gate>> gateTypes;
+	vector<gvertex>   constGates;
+	//Gates with unconnected pins 
 	vector<gvertex>   freeOutputGates;
-	vector<gvertex>   freeInputGates; 
-	vector<unique_ptr<UserDefinedGateModel>> UserDefinedGates;
-	bool TestOfCorrection();
-	vector<string> StandardGate;
-	void StatusCheck(WorkbenchStatus s) const;
-	void StatusCheck(vector<WorkbenchStatus> s) const;
-	vector<std::size_t> freeInputPins(gvertex v) const; 
-	vector<std::size_t> freeOutputPins(gvertex v) const;
-	std::size_t GetNewID()
-	{
-		lastID++; 
-		return (lastID - 1); 
-	}
-	std::size_t lastID; 
-	std::unordered_map<string, gvertex> VertexNames;
-	std::unordered_map<string, int> TypeNames; 
+	vector<gvertex>   freeInputGates;
+	//Unconnected pins 
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedInPins; 
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedOutPins;
+	//Names of vertex, name must be unique
+	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
 
-	
 };
-
-
-inline const vector<string> & Workbench::ListOfStandartGates() const
-{ 
-	return StandardGate;
-}
-
-class WorkbenchStatusException : public runtime_error
-{
-public:
-	WorkbenchStatusException(WorkbenchStatus actualStatus, WorkbenchStatus wantedStatus) 
-	:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires " + to_string(wantedStatus)){}	
-
-	WorkbenchStatusException(WorkbenchStatus actualStatus)
-		:runtime_error("Workbench is actualy in status = " + to_string(actualStatus) + ",but these operation requires different status"){} 
-};
-
-
 

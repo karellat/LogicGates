@@ -2,558 +2,294 @@
 
 
 
-Workbench::Workbench() : lastID(0)
+Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruction)
 {
-	graph = std::make_unique<Graph<std::unique_ptr<Gate>, std::unique_ptr<Signal>>>(); 
-	std::size_t s_size = 13;
-	std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
-	for(size_t i = 0; i < s_size; i++)
+	if(outputSize == 0 )
 	{
-		StandardGate.push_back(s[i]);
-		TypeNames[s[i]] = i + 1; 
+		throw isize; 
 	}
+	//Graph & Standart Gates  init  
+	graph = std::make_unique<Graph<Gate*, std::unique_ptr<Signal>>>(); 
+	gateTypes["BLANK"] =(make_unique<BlankGate>());
+	gateTypes["CONST0"] = (make_unique<ConstGate0>());
+	gateTypes["CONST1"] = (make_unique<ConstGate1>());
+	gateTypes["NOT"] = (make_unique<NotGate>());
+	gateTypes["OR"] = (make_unique<OrGate>());
+	gateTypes["AND"] = (make_unique<AndGate>());
+	gateTypes["XOR"] = (make_unique<XorGate>());
+	gateTypes["NAND"] = (make_unique<NandGate>());
+	gateTypes["NOR"] = (make_unique<NorGate>());
+	gateTypes["XOR"] = (make_unique<XnorGate>());
+	gateTypes["DOUBLE"] = (make_unique<DoubleGate>());
+
+	//prepare io gates, add their names 
+	inputGate = make_unique<InputGate>(inputSize);
+	outputGate = make_unique<OutputGate>(outputSize);
+	inputVertex = graph->add_vertex(inputGate.get()); 
+	outputVertex = graph->add_vertex(outputGate.get());
+	vertexNames["I"] = inputVertex;
+	vertexNames["O"] = outputVertex;
+	//add empty pins 
+	unordered_set<size_t>& in = unconnectedOutPins[inputVertex]; 
+	unordered_set<size_t>& out = unconnectedInPins[outputVertex];
 	
-
-}
-
-Workbench::~Workbench()
-{
-}
-
-std::vector<std::string> Workbench::ListOfFreeInputGates()
-{
-	std::vector<std::string> o;
-	for ( gvertex  i : freeInputGates)
+	for (size_t i = 0; i < inputSize; i++)
 	{
-		std::string name = i->value->Name() + " ID: " + std::to_string(i->value->Id());
-		std::vector<std::size_t> freePins = freeInputPins(i);
-		name += " Free Pins: (";
-		for (std::size_t j=0; j<freePins.size(); j++)
-	    {
-			
-			name += std::to_string(freePins[j]); 
-			if (j != freePins.size() - 1) name += ",";
- 	    }
-		name += ")"; 
-
-		o.push_back(name);
+		in.insert(i);
 	}
-	return o; 
-}
-
-std::vector<std::string> Workbench::ListOfFreeOutputGates()
-{
-	std::vector<string> o;
-	for (gvertex i : freeOutputGates)
+	for (size_t i = 0; i < outputSize; i++)
 	{
-		string name = i->value->Name() + " ID: " + std::to_string(i->value->Id());
-		vector<std::size_t> freePins = freeOutputPins(i);
-		name += " Free Pins: (";
-		for (std::size_t j = 0; j<freePins.size(); j++)
-		{
-
-			name += std::to_string(freePins[j]);
-			if (j != freePins.size() - 1) name += ",";
-		}
-		name += ")";
-		o.push_back(name);
+		out.insert(i);
 	}
-	return o;
-}
 
-std::vector<std::string> Workbench::ListOfUserDefinedGates()
-{
-	std::vector<std::string> o; 
-	for (auto && i : UserDefinedGates)
-	{
-		o.push_back(i->Name() +  " " + std::to_string(i->Id()));
-	}
-	return o;
-}
-
-vector<string> Workbench::ListOfNamedVertex()
-{
-	vector<string> o; 
-	o.resize(VertexNames.size());
-	transform(VertexNames.begin(), VertexNames.end(), o.begin(), [](pair<string, gvertex> p) { return  p.first + " - " + p.second->value->Name(); });
-	return o;
-}
-
-bool Workbench::Connect(const std::size_t& freeInputPosition, const std::size_t& freeInputID, const std::size_t& freeOutputPosition, const std::size_t& freeOutputID)
-{
-	StatusCheck(UnderConstruction); 
 	
-	if (freeInputPosition > freeInputGates.size() || freeInputPosition < 0 ||
-		freeOutputPosition > freeOutputGates.size() || freeOutputPosition < 0)
-		return false; 
-
-	gvertex from = freeOutputGates[freeOutputPosition];
-	gvertex to = freeInputGates[freeInputPosition]; 
-
-	auto free_id_from = freeOutputPins(from); 
-	auto free_id_to = freeInputPins(to);
-
-	if (!any_of(free_id_from.begin(), free_id_from.end(), [freeOutputID](auto i) {return i == freeOutputID; }))
-		return false; 
-	if (!any_of(free_id_to.begin(), free_id_to.end(), [freeInputID](auto i) {return i == freeInputID; }))
-		return false; 
-	unique_ptr<Signal> s = make_unique<Signal>(Signal(Floating, freeInputID, freeOutputID));
-	graph->connect(from, to, std::move(s));
-	free_id_from = freeOutputPins(from);
-	free_id_to = freeInputPins(to);
-	if (free_id_from.size() == 0) freeOutputGates.erase(freeOutputGates.begin() + freeOutputPosition);
-	if (free_id_to.size() == 0)   freeInputGates.erase(freeInputGates.begin() + freeInputPosition);
-	
-	return true; 
 }
-bool Workbench::Connect(gvertex from, gvertex to, std::size_t fromPin, std::size_t toPin)
+//List all names of actual network 
+const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
-	StatusCheck(UnderConstruction);
-	
-	auto free_id_from = freeOutputPins(from);
-	auto free_id_to = freeInputPins(to);
-	//Check if the pins are not ocuppied or even exist
-	if (!any_of(free_id_from.begin(), free_id_from.end(), [fromPin](auto i) {return i == fromPin; }))
-		return false;
-	if (!any_of(free_id_to.begin(), free_id_to.end(), [toPin](auto i) {return i == toPin; }))
-		return false;
-
-	unique_ptr<Signal> s = make_unique<Signal>(Signal(Floating, toPin, fromPin));
-	graph->connect(from, to, std::move(s));
-	free_id_from = freeOutputPins(from);
-	free_id_to = freeInputPins(to);
-	
-	if (free_id_from.size() == 0)
-	{
-		freeOutputGates.erase(std::remove_if(freeOutputGates.begin(), freeOutputGates.end(), [from](gvertex v) {return from == v; }),freeOutputGates.end());
-	}
-	if (free_id_to.size() == 0) {
-		freeInputGates.erase(std::remove_if(freeInputGates.begin(), freeInputGates.end(), [to](gvertex v) {return to == v; }),freeInputGates.end());
-	}
-	return true;
+	unique_ptr<vector<string>> out; 
+	//for_each(vertexNames.begin(), vertexNames.end(), [&out](pair<string, Gate*>& i) {out->push_back(i.first); });
+	return std::move(out);
 }
-gvertex Workbench::Add(const std::size_t& num)
+//List all types
+const unique_ptr<vector<string>> Workbench::ListOfType() const
 {
-	StatusCheck(UnderConstruction);
-	
-	if (StandardGate.size() <= num)
-		throw new runtime_error("Argument of gate adding out of index");
-	
-	unique_ptr<Gate> added; 
-	    switch (num)
-	    {
-		case 0:
-			added = make_unique<NotGate>(NotGate(GetNewID())); 
-			break;
-		case 1: 
-			added = make_unique<AndGate>(AndGate(GetNewID()));
-			break; 
-		case 2:
-			added = make_unique<OrGate>(OrGate(GetNewID()));
-			break; 
-		case 3:
-			added = make_unique<XorGate>(XorGate(GetNewID())); 
-			break; 
-		case 4: 
-			added = make_unique<NandGate>(NandGate(GetNewID()));
-			break; 
-		case 5: 
-			added = make_unique<NorGate>(NorGate(GetNewID()));
-			break; 
-		case 6:
-			added = make_unique<XnorGate>(XnorGate(GetNewID()));
-			break;
-		case 7: 
-			added = make_unique<BlankGate>(BlankGate(GetNewID()));
-			break; 
-		case 8: 
-			return AddConstGate(true);
-		case 9: 
-			return AddConstGate(false);
-	    case 10: 
-			return AddInputGate();
-		case 11: 
-			return AddOutputGate();
-		case 12:
-			added = make_unique<DoubleGate>(DoubleGate(GetNewID()));
-			break;
-	    default: 
-	    	throw new runtime_error("Unknown adding situation, index num = " + std::to_string(num) + " out of index");
-	    }
-    
-	auto v = graph->add_vertex(std::move(added));
-	if (v->value->GetLengthOfInput() > 0)
-		freeInputGates.push_back(v);
-	if (v->value->GetLengthOfOutput() > 0)
-		freeOutputGates.push_back(v);
-	return v; 
+	unique_ptr<vector<string>> out; 
+	//for_each(gateTypes.begin(), gateTypes.end(), [&out](pair<string,unique_ptr<Gate>> p) {out->push_back(p.first); });
+	return std::move(out);
 }
-gvertex Workbench::GetType(string typeName)
+
+//Add new gate to the network with "name" of "typeName". If typeName does not exist as a type throws out_of_range exception. If vertex named same as name throws. 
+void Workbench::Add(std::string name, std::string typeName)
 {
-	int index = TypeNames.at(typeName);
-	//User defined Gates: 
-	if(index < 0 )
+	//Check existing type and unambiguity of name
+	if (gateTypes.find(typeName) == gateTypes.end())
+		throw utype;
+	if (vertexNames.find(name) != vertexNames.end())
+		throw iname;
+	//Get type 
+	Gate * g = gateTypes[typeName].get();
+	//Add new vertex of given type to the Graph 
+	vertexNames[name] = graph->add_vertex(g);
+	//add free ids of pins 
+	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfInput(); i++)
 	{
-		size_t i = (index * -1) - 1; 
-		unique_ptr<Gate> g = UserDefinedGates[i]->getGate(GetNewID());
-		auto v = graph->add_vertex(std::move(g));
-		if (v->value->GetLengthOfInput() > 0)
-			freeInputGates.push_back(v);
-		if (v->value->GetLengthOfOutput() > 0)
-			freeOutputGates.push_back(v);
-		return v; 
+		unconnectedInPins[vertexNames[name]].insert(i);
 	}
-	//Predefined Gates 
-	else
+	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfOutput(); i++)
 	{
-		std::size_t i = index - 1; 
-		return Add(i);
+		unconnectedOutPins[vertexNames[name]].insert(i);
 	}
 }
-
-bool Workbench::GetVertex(string name,gvertex& v)
+//Connect fromName vertex to toName vertex using given pins IDs - if names of vector does not exists throw 
+void Workbench::Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin)
 {
-	try
-	{
-		v = VertexNames.at(name);
-	}
-	catch(std::out_of_range)
-	{
-		return false; 
-	}
-	return true;
+	//Find vertex
+	if (vertexNames.find(fromName) == vertexNames.end())
+		throw uname;
+	if (vertexNames.find(toName) == vertexNames.end())
+		throw uname;
+
+	gvertex from = vertexNames[fromName];
+	gvertex to = vertexNames[toName];
+
+	//check if pins are free
+	if (unconnectedInPins[from].find(fromPin) == unconnectedInPins[from].end())
+		throw opin; 
+	if (unconnectedOutPins[to].find(toPin) == unconnectedOutPins[to].end())
+		throw opin; 
+
+	//make connection between from and  to 
+	graph->connect(from, to, make_unique<Signal>(Floating, fromPin, toPin));
+
+	//Remove connected pins 
+	unconnectedInPins[to].erase(toPin);
+	unconnectedOutPins[from].erase(fromPin);
 }
 
-bool Workbench::AddNamedGate(string gateName, string typeName)
-{
-	//Check if there is no name conflict 
-	if(VertexNames.find(gateName) != VertexNames.end())
-	{
-		return false;
-	}
-	else
-	{
-		VertexNames[gateName] = GetType(typeName);
-		return true;
-	}
-}
 
-bool Workbench::AddUserDefineGate(const std::size_t& positionInList)
-{
-	StatusCheck(UnderConstruction);
-	if (positionInList > UserDefinedGates.size() || positionInList < 0)
-		return false; 
-
-	unique_ptr<Gate> g = UserDefinedGates[positionInList]->getGate(GetNewID());
-	gvertex v = graph->add_vertex(std::move(g));
-	if (v->value->GetLengthOfInput() > 0)
-		freeInputGates.push_back(v);
-	if (v->value->GetLengthOfOutput() > 0)
-		freeOutputGates.push_back(v); 
-
-	return true; 
-}
-
+//Check correction of logic network
 bool Workbench::ConstructBench()
 {
-	if (TestOfCorrection())
-	{
-		status = Constructed; 
-		return true; 
-	}
-	else
+	//TODO: log 
+	//Check if all pins are connected
+	if (any_of(unconnectedInPins.begin(), unconnectedInPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		return false; 
+	if (any_of(unconnectedOutPins.begin(), unconnectedOutPins.end(), [](auto&& p) {return !p.second.empty(); }))
+		return false; 
+	//Check availability, 
+	//TODO:copy of vertex pointers
+	vector<gvertex> startingPoints = constGates;
+	startingPoints.push_back(inputVertex);
+	if(!graph->all_vertices_available_from(startingPoints))
+		return false;
+
+	//Check cycles 
+	//TODO:copy of vertex pointers
+	if (graph->cycle_detection())
+		return false; 
+	status = Constructed;
+
+	return true; 
 }
 
-gvertex Workbench::AddInputGate()
+//Simulate evaluation of the logical network 
+void Workbench::SetInput(vector<bool> input)
 {
-	StatusCheck(UnderConstruction);
-	unique_ptr<Gate> i = make_unique<InputGate>(InputGate(GetNewID()));
-	gvertex v = graph->add_vertex(std::move(i));
-	InputGates.push_back(v);
-	freeOutputGates.push_back(v);
-	return v; 
-}
-
-gvertex Workbench::AddOutputGate()
-{
-	unique_ptr<Gate> o = make_unique<OutputGate>(OutputGate(GetNewID()));
-	gvertex v = graph->add_vertex(std::move(o));
-	OutputGates.push_back(v);
-	freeInputGates.push_back(v);
-	return v; 
-}
-
-bool Workbench::SetInput(vector<bool> input)
-{
-	for (auto o : OutputGates)
-		o->value->Reset();
-	std::size_t tacts = 0; 
-
-	vector<WorkbenchStatus> statuses; 
-	statuses.push_back(Constructed);
-	statuses.push_back(Calculated);
-	StatusCheck(statuses);
-	if (input.size() != InputGates.size())
-		throw new runtime_error("input vector does not fit input size");
-
-	set<gvertex> following_tact_gates; 
-	for (std::size_t i = 0; i < InputGates.size(); i++)
+	//Prepare starting vertex, const & input 
+	unordered_set<gvertex> followingTact; 
+	unordered_set<gvertex> actualTact; 
+	bool outputSet = false; 
+	vector<gedge> inputFrom = graph->edges_from(inputVertex);
+	for (auto i : inputFrom)
 	{
-		gvertex v = InputGates[i];
-		vector<gedge> edges = graph->edges_from(v);
-		for (auto e : edges)
-		{
-			following_tact_gates.insert(e->to);
-			if (input[i])
-				e->value->status = One;
-			else
-				e->value->status = Zero;
-		}
+		i->value->status = input[i->value->fromID] ? One : Zero;
+		actualTact.insert(i->to);
 	}
-
-	for (auto i : ConstGates)
+	for_each(constGates.begin(), constGates.end(), [&actualTact](gvertex g) {actualTact.insert(g); });
+	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
+	while (!outputSet)
 	{
-		vector<gedge> edges = graph->edges_from(i);
-		vector<bool> blank;
-		for (auto e : edges)
-		{
-			following_tact_gates.insert(e->to);
-			if(i->value->Update(blank)[0])
-				e->value->status = One;
-			else
-				e->value->status = Zero;
-		}
-	}
 
-		set<gvertex> actual_tact_gates = following_tact_gates;
-		following_tact_gates.clear();
-		while (any_of(OutputGates.begin(), OutputGates.end(), [](gvertex o_g) {return !(o_g->value->result);}))
+		for (auto g : actualTact)
 		{
-			for(auto av : actual_tact_gates)
+			//Read inputs, if any of them  floating add vertex to  following tact
+			bool evaluated = true;
+			vector<gedge> toG = graph->edges_to(g);
+			vector<bool> inputG;
+			inputG.resize(SizeOfOutput());
+			for (auto i : toG)
 			{
-				vector<gedge> input_edges = graph->edges_to(av); 
-				/*std::sort(input_edges.begin(),input_edges.end(),[] ()
+				if (i->value->status == One)
 				{
-				
-				});*/
-				vector<bool> in; 
-				bool notFinished = false;
-				in.resize(av->value->GetLengthOfInput(), false);
-				for (auto e : input_edges)
-				{
-					if (e->value->status == Floating)
-					{
-						notFinished = true;
-						break;
-					}
-					else if (e->value->status == One)
-						in[e->value->toID] = true;
-					else
-						in[e->value->toID] = false;
+					inputG[i->value->toID] = true;
 				}
-				if (notFinished) continue; 
+				else if (i->value->status == Zero)
+				{
+					inputG[i->value->toID] = false;
+				}
+				else
+				{
+					evaluated = false;
+					followingTact.insert(g);
+					break;
+				}
+			}
+			if (!evaluated) continue;
 
-				vector<bool> output = av->value->Update(in); 
-				vector<gedge> output_edges = graph->edges_from(av);
-				for(auto oe : output_edges)
-				{
-					if (output[oe->value->fromID])
-						oe->value->status = One;
-					else
-						oe->value->status = Zero; 
-					following_tact_gates.insert(oe->to);
-				}
+			//decided if OutputVertex is set;
+			if (g == outputVertex)
+			{
+				outputSet = true;
+				break;
 
 			}
-			actual_tact_gates = following_tact_gates;
-			tacts++; 
+			//Count logical function of gate & set outputs
+			vector<bool> outputG = g->value->Update(inputG);
+			vector<gedge> fromG = graph->edges_from(g);
+			for (auto i : fromG)
+			{
+
+				if (outputG[i->value->toID])
+				{
+					i->value->status = One;
+				}
+				else
+				{
+					i->value->status = Zero;
+				}
+				followingTact.insert(i->to);
+			}
+
 		}
-	
+		actualTact = followingTact;
+		followingTact.clear();
+	}
 	status = Calculated;
-	return true; 
 }
 
-vector<bool> Workbench::ReadOutput()
+//Return  read output 
+vector<bool> Workbench::ReadOutput() const
 {
-	StatusCheck(Calculated);
-	vector<bool> o; 
-	for (auto i : OutputGates)
-		o.push_back(i->value->resultValues[0]);
-	return o; 
+	if (status != Calculated) throw istat;
+	vector<bool> outputBool;
+	outputBool.resize(SizeOfOutput());
+	vector<gedge> toOutput = graph->edges_to(outputVertex);
+	for (auto i : toOutput)
+	{
+		if (i->value->status == One)
+			outputBool[i->value->toID] = true;
+		else if (i->value->status == Zero)
+			outputBool[i->value->toID] = false;
+		else
+			throw istat;
+	}
+
+	return std::move(outputBool);
 }
 
-bool Workbench::ConstructUserGate(string name)
+void Workbench::ConstructUserGate(string name, size_t newInputSize, size_t newOutputSize)
 {
-	vector<WorkbenchStatus> ws; 
-	ws.push_back(Calculated); 
-	ws.push_back(Constructed);
-	StatusCheck(ws);
-	unique_ptr<UserDefinedGateModel> model = make_unique<UserDefinedGateModel>(std::move(graph), InputGates, OutputGates, ConstGates, name, GetNewID());
-	UserDefinedGates.push_back(std::move(model));
-	TypeNames[name] = -1 * (int)UserDefinedGates.size();
-	ResetWorkbench(false);
-	return true; 
+	if (status == UnderConstruction)
+		throw istat;
+	//Create new gate type with selected name 
+	unique_ptr<UserDefinedGateModel> newUserGate = make_unique<UserDefinedGateModel>(std::move(graph), std::move(inputGate), inputVertex,
+		std::move(outputGate), outputVertex,constGates, name);
+	//Check name of type
+	if (gateTypes.find(name) != gateTypes.end())
+		throw itype; 
+	gateTypes[name] = std::move(newUserGate);
+	ResetWorkbench(false, newInputSize, newOutputSize);
 }
 
-vector<string> Workbench::ListAllGates() const
+void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize)
 {
-	vector<string> output; 
-	for (auto && v : graph->vertices)
+	if (newOutputSize == 0)
 	{
-		string gate = "ID: " + std::to_string(v->value->Id()) + " Name: " + v->value->Name();
-		gate += "\n InputSize: " + std::to_string(v->value->GetLengthOfInput()) + " OutputSize: " + std::to_string(v->value->GetLengthOfOutput()); 
-		gate += "\n Input Edges: "; 
-		for(auto i : graph->edges_to(v.get()))
-		{
-			gate += "\n\t from pin " + std::to_string(i->value->fromID) + " (" + i->from->value->Name() + ", ID: " + std::to_string(i->from->value->Id()) +
-				")  ---------> to pin " +  std::to_string(i->value->toID);
-		}
-		/*gate += "\n Output Edges: ";
-		for(auto i : graph->edges_from(v.get()))
-		{
-			gate += "\n\t from pin " + std::to_string(i->value->fromID) + " ---------> to pin " + std::to_string(i->value->toID) +
-				" (" + i->to->value->Name() + ", ID: " + std::to_string(i->to->value->Id()) + ")";
-		}
-*/
-		output.push_back(gate);
+		throw isize; 
 	}
-	return output;
+	//Create new graph for logical network 
+	graph = std::make_unique<Graph<Gate*, std::unique_ptr<Signal>>>();
+	//if deleteUDG reset created types 
+	if(deleteUDG)
+	{
+		gateTypes.clear(); 
+		gateTypes["BLANK"] = (make_unique<BlankGate>());
+		gateTypes["CONST0"] = (make_unique<ConstGate0>());
+		gateTypes["CONST1"] = (make_unique<ConstGate1>());
+		gateTypes["NOT"] = (make_unique<NotGate>());
+		gateTypes["OR"] = (make_unique<OrGate>());
+		gateTypes["AND"] = (make_unique<AndGate>());
+		gateTypes["XOR"] = (make_unique<XorGate>());
+		gateTypes["NAND"] = (make_unique<NandGate>());
+		gateTypes["NOR"] = (make_unique<NorGate>());
+		gateTypes["XOR"] = (make_unique<XnorGate>());
+		gateTypes["DOUBLE"] = (make_unique<DoubleGate>());
+	}
+	//clear old constGates
+	constGates.clear();
+	//clear old vertex names
+	vertexNames.clear();
+	unconnectedOutPins.clear();
+	unconnectedInPins.clear();
+	//create new io gate of given sizes 
+	inputGate = make_unique<InputGate>(newInputSize);
+	outputGate = make_unique<OutputGate>(newOutputSize);
+	inputVertex = graph->add_vertex(inputGate.get());
+	outputVertex = graph->add_vertex(outputGate.get());
+	vertexNames["I"] = inputVertex;
+	vertexNames["O"] = outputVertex;
+	//add empty pins 
+	unordered_set<size_t>& in = unconnectedOutPins[inputVertex];
+	unordered_set<size_t>& out = unconnectedInPins[outputVertex];
+
+	for (size_t i = 0; i < newInputSize; i++)
+	{
+		in.insert(i);
+	}
+	for (size_t i = 0; i < newOutputSize; i++)
+	{
+		out.insert(i);
+	}
 }
 
-void Workbench::ResetWorkbench(bool deleteUDG)
-{
-	status = UnderConstruction;
-	graph = make_unique<Graph<unique_ptr<Gate>, unique_ptr<Signal>>>();
-	InputGates.clear();
-	OutputGates.clear();
-	ConstGates.clear();
-	freeOutputGates.clear();
-	freeInputGates.clear();
-	if (deleteUDG) {
-		UserDefinedGates.clear();
-		std::size_t size_s = 13;
-		std::string s[] = { "NOT","AND","OR","XOR","NAND","NOR","XNOR", "BLANK","CONST1", "CONST0","INPUT","OUTPUT","DOUBLE" };
-		TypeNames.clear();
-		for (std::size_t i = 0; i < size_s; i++)
-		{
-			TypeNames[s[i]] = i + 1;
-		}
-	}
-	VertexNames.clear();
-	testOutput.clear();
-}
-
-gvertex Workbench::AddConstGate(bool c)
-{
-	unique_ptr<Gate> g;
-	if(c)
-		g = make_unique<ConstGate1>(ConstGate1(GetNewID()));
-	else 
-		g = make_unique<ConstGate0>(ConstGate0(GetNewID()));
-	gvertex v = graph->add_vertex(std::move(g));
-	ConstGates.push_back(v);
-	freeOutputGates.push_back(v);
-	return v; 
-}
-
-
-bool Workbench::TestOfCorrection()
-{
-	testOutput = "Test of correction: \n";
-	// All connection  and io tests 
-	if (InputGates.size() == 0)
-	{
-		testOutput += "Input size is zero\n";
-		return false; 
-	}
-	if (OutputGates.size() == 0)
-	{
-		testOutput += "Output size is zero\n";
-		return false; 
-	}
-	if(freeOutputGates.size() != 0)
-	{
-		testOutput += "All of ouput pins are not connected\n"; 
-		return false; 
-	}
-	if (freeInputGates.size() != 0)
-	{
-		testOutput += "All of input pins are not connected\n";
-		return false;
-	}
-
-	//Test empty circuits 
-	vector<gvertex> startingV; 
-	std::for_each(InputGates.begin(), InputGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
-	std::for_each(ConstGates.begin(), ConstGates.end(), [&startingV](gvertex g) {startingV.push_back(g); });
-	if(graph->all_vertices_available_from(startingV))
-	{
-		testOutput += "\tAccessibility check: OK \n";
-	}
-	else
-	{
-		testOutput += "Invalid graph,some part of graph is not connected to inputs or const inputs";
-		return false;
-	}
-
-	if(!graph->cycle_detection())
-	{
-		testOutput += "\t No cycle detected\n";
-	}
-	else
-	{
-		testOutput += "Invalid graph, cycle detected.\n"; 
-		return false; 
-	}
-
-
-	return true; 
-}
-
-void Workbench::StatusCheck(WorkbenchStatus s) const
-{
-	if (status != s)
-		throw new WorkbenchStatusException(status, s);
-}
-
-void Workbench::StatusCheck(vector<WorkbenchStatus> s) const
-{
-	for (auto i : s)
-	{
-		if (i == status)
-			return;
-	}
-	throw  new WorkbenchStatusException(status);
-}
-
-vector<std::size_t> Workbench::freeInputPins(gvertex v) const
-{
-	vector<std::size_t> all_id;
-	all_id.resize(v->value->GetLengthOfInput()); 
-	std::iota(all_id.begin(), all_id.end(), 0);
-	vector<gedge> edges_to = graph->edges_to(v);
-	vector<std::size_t> connected_id;
-	connected_id.resize(edges_to.size());
-	std::transform(edges_to.begin(), edges_to.end(), connected_id.begin(), [](gedge v) {return v->value->toID; });
-	vector<std::size_t> output; 
-	std::sort(connected_id.begin(), connected_id.end());
-	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output,output.begin()));
-	return output;
-}
-
-vector<std::size_t> Workbench::freeOutputPins(gvertex v) const
-{
-	vector<std::size_t> all_id;
-	all_id.resize(v->value->GetLengthOfOutput());
-	std::iota(all_id.begin(), all_id.end(), 0);
-	vector<gedge> edges_from = graph->edges_from(v);
-	vector<std::size_t> connected_id;
-	connected_id.resize(edges_from.size());
-	std::transform(edges_from.begin(), edges_from.end(), connected_id.begin(), [](gedge v) {return v->value->fromID; });
-	vector<std::size_t> output;
-	std::sort(connected_id.begin(), connected_id.end());
-	std::set_difference(all_id.begin(), all_id.end(), connected_id.begin(), connected_id.end(), std::inserter(output, output.begin()));
-	return output;
-
-}

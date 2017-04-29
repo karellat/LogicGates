@@ -1,223 +1,31 @@
 #include "workbenchTUI.h"
+#include <iterator>
 
 using pin = std::pair<std::string, std::size_t>;
 
-WorkbenchTUI::~WorkbenchTUI()
-{
-}
-
-
 bool WorkbenchTUI::ReadFile(string path)
 {
-	output << "Reading file " + path << endl;
+	log << "Reading file " + path << endl;
 	string line;
 	if (!OpenFile(path)) return false;
-	//Read name and check input tag
-	getline(inputFile, line);
-	vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
+	//Reading construction file && construct actual workbech if necessarily 
+	if (!ReadDefinitonHeader()) return false;
+	log << "Header part sucessfully read\n";
 
-	if (tokens.size() != 2)
-	{
-		output << "Wrong format, definition line" << endl;
-		return false;
-	}
+	if (!ReadDeclarativeLine()) return false;
+	log << "Declarative part sucessfully read\n";
 
-	string tag = ToUpper(tokens[0]);
-	string gate_name = tokens[1];
-	if (tag != definitionTag)
-	{
-		output << line << std::endl << "incorrect definition tag format" << endl;
-		return false;
-	}
+	if (!ReadConnectionLine()) return false;
+	log << "Connection part sucessfully read\n";
 
-	if (!nameSizeCheck(gate_name.size())) return false;
-	if (!nameCharsCheck(gate_name)) return false;
-	gate_name.resize(gate_name.size());
-	gate_name = ToUpper(gate_name);
-
-	output << "\tGate NAME: " << gate_name << endl;;
-	name = gate_name;
-	//Setting names: 
-
-	string typeName;
-	string vertexName;
-
-	if (inputFile.eof())
-	{
-		output << "Unexpected eof" << endl;
-		return false;
-	}
-	getline(inputFile, line);
-	while (line[0] != '#')
-	{
-		tokens = Split(line, '\t', RemoveEmptyEntries);
-		if (!nameSizeCheck(tokens[0]) || !nameCharsCheck(tokens[0]))
-			return false;
-
-		vertexName = ToUpper(tokens[0]);
-		typeName = ToUpper(tokens[1]);
-		output << "\tVertex Name: " << vertexName << " Type Name: " << typeName << endl;
-
-		try {
-			if (!workbench->AddNamedGate(vertexName, typeName))
-			{
-				output << "\tAdding same named vertex or unknown type";
-				return false;
-			}
-		}
-		catch(out_of_range)
-		{
-			output << "\tNon existing type name \"" << typeName << "\"" << endl;
-			return false;
-		}
-
-		line = "";
-		while (line == "")
-		{
-			if (inputFile.eof())
-				output << "\tUnexpected end of file, in declaring section " << endl;
-			getline(inputFile, line);
-		}
-	}
-	output << "These named vertex were created: ";
-	output << "Declaration part over " << endl;
-	for (auto i : workbench->ListOfNamedVertex())
-	{
-		output << "\t " << i << endl;
-	}
-	//Connection part
-	output << "Connection part: " << endl;
-	tag = line;
-
-	if (tag != connectionTag)
-	{
-		output << line << std::endl << "incorrect connection tag format" << endl;
-		return false;
-	}
-	if (inputFile.eof())
-	{
-		output << "Unexpected eof" << endl;
-		return false;
-	}
-	getline(inputFile, line);
-
-
-	while (line[0] != '#')
-	{
-		tokens = Split(line, '\t', RemoveEmptyEntries);
-		if (tokens.size() != 3)
-		{
-			output << "Incorrect format of connection line " + line << endl;
-			return false;
-		}
-		pin aGate;
-		pin bGate;
-		if (!ParsePin(tokens[0], aGate) || !ParsePin(tokens[2], bGate))
-			return false;
-		if (tokens[1].size() != 2)
-		{
-			output << "Incorrect format of connection arrow: " + tokens[1];
-			return false;
-		}
-		gvertex a;
-		gvertex b;
-		if (!workbench->GetVertex(aGate.first, a) || !workbench->GetVertex(bGate.first, b))
-		{
-			output << "Incorrect name, nick name does not exists:  " << aGate.first << ", " << bGate.first << endl;
-			return false;
-		}
-		if (tokens[1] == "->")
-		{
-			if (!workbench->Connect(a, b, aGate.second, bGate.second))
-			{
-				output << "Incorrected pin,  ocuppied or not even exists :" << line << endl;
-				return false;
-			}
-			else
-			{
-				output << "\tConnecting " << aGate.first << "[" << aGate.second << "]"
-					<< " to " << bGate.first << "[" << bGate.second << "]" << endl;
-			}
-		}
-		else if (tokens[1] == "<-")
-		{
-			if (!workbench->Connect(b, a, bGate.second, aGate.second))
-			{
-				output << "Incorrected pin,  ocuppied or not even exists :" << line << endl;
-				return false;
-			}
-			else
-			{
-				output << "\tConnecting " << bGate.first << "[" << bGate.second << "]"
-					<< " to " << aGate.first << "[" << aGate.second << "]" << endl;
-			}
-		}
-		else
-		{
-			output << "Incorrect format of connection arrow " + tokens[1];
-			return false;
-		}
-
-
-
-
-
-		line = "";
-		while (line == "")
-		{
-			if (inputFile.eof())
-			{
-				output << "\tUnexpected end of file, in connecting section " << endl;
-				return false;
-			}
-			getline(inputFile, line);
-		}
-	}
-
-	//Construction part
-	output << "Construction part: " << endl;
-	if (workbench->ListOfFreeInputGates().size() != 0)
-	{
-		output << "Not connected input pins: " << endl;
-		return false;
-	}
-	if (workbench->ListOfFreeOutputGates().size() != 0)
-	{
-		output << "Not connected output pins: " << endl;
-		return false;
-	}
-	if (workbench->SizeOfInput() == 0)
-	{
-		output << "Input gates missing" << endl;
-		return false;
-	}
-	if (workbench->SizeOfOutput() == 0)
-	{
-		output << "Output gates missing" << endl;
-		return false;
-	}
-
-	output << "\tAll pins connected" << endl << "\tinput size: " << workbench->SizeOfInput() << " output size: " << workbench->SizeOfOutput() << endl;
-
-
-	output << "\tConstructing workbench" << endl;
-	if (workbench->ConstructBench())
-	{
-		output << "\tBench was successfully constructed" << endl;
-		output << workbench->GetTestOutput();
-	}
-	else
-	{
-		output << "\tInvalid bench architecture, construction failed \n" << endl;
-		output << workbench->GetTestOutput();
-		return false;
-	}
 
 	//ending tag check
 	if (line[0] == '#')
 	{
 		output << "Successfull loaded Gate from file " << endl;
 		inputFile.close();
+		//set status tag, that next construction file reading can create new Gate 
+		readyForConstruction = true;
 		return true;
 	}
 	else
@@ -226,97 +34,35 @@ bool WorkbenchTUI::ReadFile(string path)
 		return false;
 	}
 
-
+	
 }
 
 void WorkbenchTUI::InteraktiveMode()
 {
-	while(!exiting && InteractiveReadingFile())
-	{
-		InteractiveSeting();
-		if (constructing)
-		{
-			constructing = false;
-			if (workbench->ConstructUserGate(name))
-			{
-				output << "Gate was successful constructed, name: " << name << endl;
-				name = "";
-			}
-			else
-			{
-				output << "Gate construction failed, exiting " << endl;
-				exiting = true;
-			}
-
-		}
-		if (reseting)
-		{
-			workbench->ResetWorkbench(true);
-			output << "Reseting readed workbench, deleting user defined gates" << endl;
-			reseting = false;
-		}
-	}
-		output << "Exiting interactive mode" << endl;
 }
-void WorkbenchTUI::InteraktiveMode(string path)
+
+void WorkbenchTUI::PassiveMode(vector<string> filePaths, vector<vector<bool>> inputSet)
 {
-	bool  inRead = false; 
-	while (!exiting && (inRead || ReadFile(path)))
+	//Construct all construction files;
+	for (auto path : filePaths)
 	{
-		InteractiveSeting();
-		if(constructing)
+		if (!ReadFile(path))
+			return;
+	}
+	//Set inputs & read eval if  possible 
+	for (auto input: inputSet)
+	{
+		if(SetInput(input))
 		{
-			constructing = false;
-			if(workbench->ConstructUserGate(name))
+	 		vector<bool> o; 
+			if (ReadOutputs(o))
 			{
-				output << "Gate was successful constructed, name: " << name << endl;
-				name = "";
-				while(!InteractiveReadingFile()){} 
-				inRead = true; 
-			}
-			else
-			{
-				output << "Gate construction failed, exiting " << endl;
-				exiting = true;
+				output << "OUTPUT: " << boolsToString(o);
+				log << "OUTPUT: " << boolsToString(o); 
 			}
 		}
-		if (reseting)
-		{
-			workbench->ResetWorkbench(true);
-			output << "Reseting readed workbench, deleting user defined gates" << endl;
-			reseting = false;
-		}
 	}
-		output << "Exiting interactive mode" << endl;
-	
 }
-
-void WorkbenchTUI::PassiveMode(string path, string inputString)
-{
-	vector<bool> inputSettings;
-	stringToBools(inputString, inputSettings);
-	//Prepare bench: 
-	if (!ReadFile(path))
-		return;
-	//Set input
-	if (!SetInput(inputSettings))
-		return;
-
-	vector<bool> o;
-	if (!ReadOutputs(o))
-		return;
-	else
-	{
-		string os;
-		boolsToString(o, os);
-		output << "Calculation was successfull, readed values: " << os << endl;
-	}
-
-	output << "Application closed" << endl;
-
-
-}
-
 void WorkbenchTUI::InteractiveSeting()
 {
 	string line;
@@ -335,10 +81,7 @@ void WorkbenchTUI::InteractiveSeting()
 			if (SetInput(in))
 			{
 				if (ReadOutputs(out))
-				{
-					boolsToString(out, s);
-					output << "Output : " << s << endl;
-				}
+					output << "Output : " << boolsToString(out)<< endl;
 			}
 			else
 			{
@@ -387,17 +130,15 @@ bool WorkbenchTUI::SetInput(vector<bool> inputSettings)
 		output << "Invalid size of input " << endl;
 		return false;
 	}
-	if (workbench->SetInput(inputSettings))
-	{
+	try {
+		workbench->SetInput(inputSettings);
 		string s;
-		boolsToString(inputSettings, s);
-		output << "Input was set to: " << s << endl;
+		output << "Input was set to: " << boolsToString(inputSettings) << endl;
 		return true;
 	}
-	else
+	catch(exception& e)
 	{
-		output << "Input was not correctly set, workbench invalid status" << endl;
-		return false;
+		log << "Invalid output or situation: " << e.what() << endl;
 	}
 }
 
@@ -410,31 +151,280 @@ bool WorkbenchTUI::ReadOutputs(vector<bool>& outputValue)
 
 bool WorkbenchTUI::OpenFile(std::string path)
 {
-	string s = "\tOpening file " + path;
-	output << s << endl;
+	log << "\tOpening file " + path << endl;
 	inputFile.open(path);
 	if (inputFile.is_open())
-	{
-		return true;
-	}
+			return true;
 	else
 	{
-		output << "\tUnable to open file" << std::endl;
+		log << "\tUnable to open file" << std::endl;
 		return false;
 	}
 }
+
+bool WorkbenchTUI::ReadDefinitonHeader()
+{
+
+	//Check first line of file 
+	string line;
+	size_t newInputSize; 
+	size_t newOutputSize;
+	if (inputFile.eof())
+	{
+		log << "Unexpected end of file\n";
+		return false;
+	}
+	std::getline(inputFile, line);
+	vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
+	if (tokens.size() != 2)
+	{
+		log << "Wrong amount of arguments in header line\n";
+		return false;
+	}
+
+	for (size_t i = 0; i < tokens.size(); i++)
+	{
+		tokens[i] = ToUpper(tokens[i]);
+	}
+
+	if (tokens[0] != definitionTag)
+	{
+		log << "Wrong format of defition tag " << tokens[0] << endl;
+		return false;
+	}
+	//Name 
+	if (!nameSizeCheck(tokens[1]) || !nameCharsCheck(tokens[1]))
+		return false;
+
+	string new_name = tokens[1];
+	//Get Input size 
+	if (inputFile.eof())
+	{
+		log << "Unexpected end of file \n";
+		return false;
+	}
+	getline(inputFile, line);
+	tokens = Split(line, '\t', RemoveEmptyEntries);
+	if (tokens.size() != 2)
+	{
+		log << "Invalid amount of tokens in inputSize line\n";
+		return false;
+	}
+	tokens[0] = ToUpper(tokens[0]);
+	if (tokens[0] != inputTag)
+	{
+		log << "Wrong format of input  tag\n";
+		return false;
+	}
+	//size of input 
+	try
+	{
+		newInputSize = stoi(tokens[1]);
+	}
+	catch(exception& e)
+	{
+		log << "Wrong format of input size: " << tokens[1] << "; " << e.what() << endl;
+		return false;
+	}
+	//Get Output size 
+	if (inputFile.eof())
+	{
+		log << "Unexpected end of file \n";
+		return false;
+	}
+	getline(inputFile, line);
+	tokens = Split(line, '\t', RemoveEmptyEntries);
+	if (tokens.size() != 2)
+	{
+		log << "Invalid amount of tokens in outputSize line\n";
+		return false;
+	}
+	tokens[0] = ToUpper(tokens[0]);
+	if (tokens[0] != outputTag)
+	{
+		log << "Wrong format of output tag\n";
+		return false;
+	}
+	//size of input 
+	try
+	{
+		newOutputSize = stoi(tokens[1]);
+	}
+	catch (exception& e)
+	{
+		log << "Wrong format of output size: " << tokens[1] << "; " << e.what() << endl;
+		return false;
+	}
+
+	//Construct Gate on the bench 
+	if(readyForConstruction)
+	{
+		if (!ConstructGate(newInputSize, newInputSize, name))
+			return false; 
+	}
+	else
+	{
+		workbench = make_unique<Workbench>(newInputSize, newOutputSize);
+	}
+
+	//Change name 
+	name = new_name;
+
+	return true; 
+}
+
+bool WorkbenchTUI::ReadDeclarativeLine()
+{
+	//make names for vertex
+	string line;
+	if(input.eof())
+	{
+		log << "Unexpected end of file\n"; 
+		return false;
+	}
+	getline(inputFile, line);
+	while (line[0] != '#')
+	{
+		//read tokens[0] - name tokens[1] - type
+		vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
+		if(tokens.size() != 2)
+		{
+			log << "Wrong amount of tokens " << line << endl;
+ 			return false; 
+		}
+		for (size_t i = 0; i < tokens.size(); i++)
+		{
+			tokens[i] = ToUpper(tokens[i]);
+		}
+		if (!nameSizeCheck(tokens[0]) || !nameCharsCheck(tokens[0]))
+			return false;
+		try {
+			workbench->Add(tokens[0], tokens[1]);
+		}
+		catch(exception& e)
+		{
+			log << "Invalid naming line: " << line << endl << "E:" << e.what() << endl;
+			return false;
+		}
+		if (input.eof())
+		{
+			log << "Unexpected end of file\n";
+			return false;
+		}
+		getline(inputFile, line);
+	}
+
+	//Check connection tag
+	if(line != connectionTag)
+	{
+		log << "Wrong format of connection tag\n";
+		return false; 
+	}
+	
+	return true;
+}
+
+bool WorkbenchTUI::ReadConnectionLine()
+{
+	string line; 
+	if(input.eof())
+	{
+		log << "Unexpected end of file\n";
+		return false; 
+	}
+	getline(inputFile,line);
+	while(line[0] != '#')
+	{
+		vector<string> tokens = Split(line, '\t', RemoveEmptyEntries);
+		if(tokens.size() != 3)
+		{
+			log << "Wrong amount of tokens: " << line << endl;
+		}
+		pair<string, size_t> from;
+		pair<string, size_t> to;
+
+		try {
+			if (tokens[1] == "->")
+			{
+				if(!ParsePin(tokens[0], from))
+				{
+					log << "Wrong format of name and pin: " << line << endl;
+					return false; 
+				}
+				if (!ParsePin(tokens[2], to))
+				{
+					log << "Wrong format of name and pin: " << line << endl;
+					return false;
+				}
+			}
+			else if (tokens[1] == "<-")
+			{
+				if (!ParsePin(tokens[2], from))
+				{
+					log << "Wrong format of name and pin: " << line << endl;
+					return false;
+				}
+				if (!ParsePin(tokens[0], to))
+				{
+					log << "Wrong format of name and pin: " << line << endl;
+					return false;
+				}
+			}
+			else
+			{
+				log << "Wrong format of connection line " << endl;
+				return false;
+			}
+
+			workbench->Connect(from.first, from.second, to.first, to.second);
+		}
+		catch(exception& e)
+		{
+			log << "Invalid connection: " << e.what() << endl;
+			return false;
+		}
+
+		if (input.eof())
+		{
+			log << "Unexpected end of file\n";
+			return false;
+		}
+		getline(inputFile, line);
+	}
+	//Check the ending tag
+	if(line != "#")
+	{
+		log << "Wrong ending tag\n"; 
+		return false; 
+	}
+	return true;
+}
+
+bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, string actualName)
+{
+	try {
+		workbench->ConstructUserGate(actualName, newInputSize, newOutputSize);
+	}
+	catch(exception& e)
+	{
+		log << "Construction failed: " << e.what();
+		return false;
+	}
+	return true;
+}
+
 
 bool WorkbenchTUI::ParsePin(string input, std::pair<string, std::size_t>& pair)
 {
 	if (input[input.size() - 1] != ']')
 	{
-		output << "Wrong format of pin missing \"]\" : " + input;
+		log << "Wrong format of pin missing \"]\" : " + input;
 		return false;
 	}
 	std::size_t i = input.find_first_of('[');
 	if (i == input.npos)
 	{
-		output << "Wrong format of pin missing \"[\" : " + input;
+		log << "Wrong format of pin missing \"[\" : " + input;
 		return false;
 	}
 
@@ -465,7 +455,7 @@ bool WorkbenchTUI::nameSizeCheck(std::size_t size)
 {
 	if (size > maxSizeOfTag)
 	{
-		output << "Gate name is too long (" + to_string(size) + ")" + " max=" + std::to_string(maxSizeOfTag) << endl;
+		log << "Gate name is too long (" + to_string(size) + ")" + " max=" + std::to_string(maxSizeOfTag) << endl;
 		return false;
 	}
 	return true;
@@ -478,7 +468,7 @@ bool WorkbenchTUI::nameCharsCheck(string name)
 			[c](char  fc) { return fc == c; });
 	}))
 	{
-		output << "Name contains one of the forbidden chars \"" + name + "\"";
+		log << "Name contains one of the forbidden chars \"" + name + "\"";
 		return false;
 	}
 	else return true;
@@ -504,18 +494,18 @@ std::string WorkbenchTUI::ToUpper(std::string s)
 	o.resize(s.size());
 	std::locale loc;
 	std::transform(s.begin(), s.end(), o.begin(), [loc](char c) {return toupper(c,loc); });
-	return o;
+	return std::move(o);
 }
 
-bool WorkbenchTUI::boolsToString(std::vector<bool> v, string& s)
+string WorkbenchTUI::boolsToString(std::vector<bool>& v)
 {
-	s.clear();
-	transform(v.begin(), v.end(), std::inserter(s, s.begin()), [](bool c)
+	string s;
+	transform(v.cbegin(), v.cend(), std::inserter(s, s.begin()), [](bool c)
 	{
 		if (c) return '1'; else return '0';
 	});
 
-	return true;
+	return std::move(s); 
 }
 
 bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
@@ -531,7 +521,7 @@ bool WorkbenchTUI::stringToBools(string s, std::vector<bool>& b)
 	}
 	catch (runtime_error)
 	{
-		output << "Wrong format of input: " << s << endl;
+		log << "Wrong format of input: " << s << endl;
 		return false;
 	}
 	return true;
