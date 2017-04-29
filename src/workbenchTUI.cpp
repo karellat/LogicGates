@@ -1,5 +1,6 @@
 #include "workbenchTUI.h"
 #include <iterator>
+#include <iostream>
 
 using pin = std::pair<std::string, std::size_t>;
 
@@ -18,7 +19,17 @@ bool WorkbenchTUI::ReadFile(const string& path)
 	if (!ReadConnectionLine()) return false;
 	log << "Connection part sucessfully read\n";
 
-
+	try
+	{
+		workbench->ConstructBench(); 
+	}
+	catch(exception& e) 
+	{
+		log << "Bench construction failed at: " << e.what() << endl;
+		return false; 
+	}
+	
+	log << "Actual bench was constructed.\n";
 	//ending tag check
 	output << "Successfull loaded Gate from file " << endl;
 	inputFile.close();
@@ -270,12 +281,12 @@ bool WorkbenchTUI::ReadDefinitonHeader()
 	//Construct Gate on the bench 
 	if(readyForConstruction)
 	{
-		if (!ConstructGate(newInputSize, newInputSize, name))
+		if (!ConstructGate(newInputSize, newOutputSize, name))
 			return false; 
 	}
 	else
 	{
-		workbench = make_unique<Workbench>(newInputSize, newOutputSize);
+		workbench = make_unique<Workbench>(newInputSize, newOutputSize,std::cin.rdbuf());
 	}
 
 	//Change name 

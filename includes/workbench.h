@@ -5,6 +5,34 @@
 #include <string>
 #include <numeric>
 #include <assert.h>
+#include <ostream>
+static class freepin : exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Constructing gate with free pin";
+	}
+} fpin;
+
+static class cycledetected :exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Cycle detected during construction";
+	}
+} dcycle;
+
+static class notavailabepart :exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Disconnected part from the rest of the logical network";
+	}
+} npart;
+
 static class invalidworkbenchstatus : public exception
 {
 public:
@@ -84,7 +112,7 @@ class Workbench
 {
 public:
 
-	Workbench(size_t inputSize, size_t outputSize);
+	Workbench(size_t inputSize, size_t outputSize,streambuf* log);
 	WorkbenchStatus status;
 
 	//Names for user output
@@ -97,7 +125,12 @@ public:
 	void Add(const std::string& name, const std::string& typeName);
 	void Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin);
 	//Construction: 
-	bool ConstructBench();
+	void ConstructBench();
+	//Activate logging 
+	void Log(streambuf* log)
+	{
+		
+	}
 
 
 	//Actions while constructed
@@ -111,6 +144,9 @@ public:
 	void ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize);
 
 protected:
+	//loging info
+	bool loging; 
+	std::ostream log; 
 	//Input & Output Gate
 	unique_ptr<Gate> inputGate; 
 	unique_ptr<Gate> outputGate;
@@ -126,12 +162,17 @@ protected:
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates;
 	//Unconnected pins 
-	unordered_map<gvertex, unordered_set<size_t>> unconnectedInPins; 
-	unordered_map<gvertex, unordered_set<size_t>> unconnectedOutPins;
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedToPins; 
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedFromPins;
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
 	//TODO: CHECK STATES
-
+	//loging methods 
+	static string boolsToString(const vector<bool>&  bools); 
+	string logEdge(const gedge& edge) const;
+	string logVertexInput(const gvertex& vertex,const vector<bool>& bools);
+	string logVertexOutput(const gvertex& vertex, const vector<bool>& bools);
 };
+
 

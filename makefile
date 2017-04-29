@@ -1,5 +1,6 @@
-CC	:= g++-6
-CFLAGS	:= -std=c++14
+CXX	:= g++-6
+CXXFLAGS	:= -std=c++14 
+#-g3 -fuse-ld=gold -fsanitize=address 
 INC	:= -I includes
 
 APPNAME	:= bin/main
@@ -8,15 +9,15 @@ OBJECTS	:= $(patsubst  src%, obj%, $(patsubst %.cpp, %.o, $(patsubst %.c, %.o, $
 SRC := src 
 EXAMDIR  := examples
 
-all: init convert $(OBJECTS)
-	$(CC) $(CFLAGS) $(INC) $(OBJECTS) -o $(APPNAME)
-	./bin/main
+compile: init convert $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INC) $(OBJECTS) -o $(APPNAME)
+	
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) $(INC) -c $< -o $@ 
+	$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
 
 obj/%.o: src/%.cpp
-	$(CC) $(CFLAGS) $(INC) -c $< -o $@ 
+	$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
 
 clean: 
 	rm -rf obj/*
@@ -28,3 +29,7 @@ init:
 convert:
 	@bash convertor $(EXAMDIR)
 	@echo "Converting eol of examples" 
+
+test1: compile
+	./bin/main -f examples/XORAND.txt examples/ADDW.txt -a
+

@@ -1,19 +1,16 @@
 #GATE	ADDW
-p	INPUT
-i0	INPUT
-i1	INPUT
+#INPUT	3
+#OUTPUT	2
 XA1	XORAND
 XA2	XORAND
 or	OR
-o1	OUTPUT
-o2	OUTPUT
 #CONNECT
-p[0]	->	XA1[0]
-i0[0]	->	XA1[1]
-i1[0]	->	XA2[0]
-XA1[0]	->	XA2[1]
+I[0]	->	XA1[0]
+I[1]	->	XA1[1]
+I[2]	->	XA2[1]
+XA1[0]	->	XA2[0]
 XA1[1]	->	OR[0]
 XA2[1]	->	OR[1]
-OR[0]	->	o1[0]
-XA2[0]	->	o2[0]
+OR[0]	->	O[0]
+XA2[0]	->	O[1]
 #

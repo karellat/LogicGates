@@ -1,0 +1,5 @@
+test -e bin || mkdir bin 
+test -e obj || mkdir obj
+Converting eol of examples
+g++-6 -std=c++14 -fuse-ld=gold -fsanitize=address  -I includes  obj/gates.o  obj/workbench.o  obj/workbenchTUI.o main.o -o bin/main
+./bin/main -f examples/XORAND.txt examples/ADDW.txt -a
