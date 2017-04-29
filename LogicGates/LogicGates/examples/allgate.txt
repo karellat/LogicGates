@@ -6,7 +6,7 @@ c0	const0
 b	BLANK
 N	NOT
 A	AND
-O	OR
+Or	OR
 X	XOR
 NA	NAND
 NO	NOR
@@ -20,16 +20,16 @@ D[1]	->	o[0]
 C1[0]	->	A[0]
 C0[0]	->	A[1]
 A[0]	->	o[1]
-i[1]	->	O[0]
-i[2]	->	O[1]
-O[0]	->	o[2]
+i[1]	->	OR[0]
+i[2]	->	OR[1]
+OR[0]	->	o[2]
 i[3]	->	X[0]
 i[4]	->	X[1]
 X[0]	->	o[3]
 i[5]	->	Na[0]
 i[6]	->	Na[1]
 Na[0]	->	o[4]
-i7[0]	->	No[0]
+i[7]	->	No[0]
 i[8]	->	No[1]
 No[0]	->	o[5]
 i[9]	->	NX[0]

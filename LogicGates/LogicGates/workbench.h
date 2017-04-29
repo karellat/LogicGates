@@ -5,6 +5,33 @@
 #include <string>
 #include <numeric>
 #include <assert.h>
+static class freepin : exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Constructing gate with free pin";
+	}
+} fpin;
+
+static class cycledetected :exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Cycle detected during construction";
+	}
+} dcycle;
+
+static class notavailabepart :exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Disconnected part from the rest of the logical network";
+	}
+} npart;
+
 static class invalidworkbenchstatus : public exception
 {
 public:
@@ -97,7 +124,7 @@ public:
 	void Add(const std::string& name, const std::string& typeName);
 	void Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin);
 	//Construction: 
-	bool ConstructBench();
+	void ConstructBench();
 
 
 	//Actions while constructed
@@ -126,8 +153,8 @@ protected:
 	vector<gvertex>   freeOutputGates;
 	vector<gvertex>   freeInputGates;
 	//Unconnected pins 
-	unordered_map<gvertex, unordered_set<size_t>> unconnectedInPins; 
-	unordered_map<gvertex, unordered_set<size_t>> unconnectedOutPins;
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedToPins; 
+	unordered_map<gvertex, unordered_set<size_t>> unconnectedFromPins;
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;

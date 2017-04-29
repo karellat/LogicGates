@@ -6,6 +6,7 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 {
 	//TODO:Same code as workbench
 	//Prepare starting vertex, const & input 
+	//Prepare starting vertex, const & input 
 	unordered_set<gvertex> followingTact;
 	unordered_set<gvertex> actualTact;
 	bool outputSet = false;
@@ -15,7 +16,16 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 		i->value->status = input[i->value->fromID] ? One : Zero;
 		actualTact.insert(i->to);
 	}
-	for_each(constGates.begin(), constGates.end(), [&actualTact](gvertex g) {actualTact.insert(g); });
+	for (auto c : constGates)
+	{
+		vector<gedge> constFrom = graph->edges_from(c);
+		for (auto i : constFrom)
+		{
+			vector<bool> blank;
+			i->value->status = c->value->Update(blank)[0] ? One : Zero;
+			actualTact.insert(i->to);
+		}
+	}
 	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
 	while (!outputSet)
 	{
@@ -26,7 +36,7 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 			bool evaluated = true;
 			vector<gedge> toG = graph->edges_to(g);
 			vector<bool> inputG;
-			inputG.resize(input_size);
+			inputG.resize(g->value->GetLengthOfInput());
 			for (auto i : toG)
 			{
 				if (i->value->status == One)
@@ -51,14 +61,14 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 			{
 				outputSet = true;
 				break;
+
 			}
 			//Count logical function of gate & set outputs
 			vector<bool> outputG = g->value->Update(inputG);
 			vector<gedge> fromG = graph->edges_from(g);
 			for (auto i : fromG)
 			{
-
-				if (outputG[i->value->toID])
+				if (outputG[i->value->fromID])
 				{
 					i->value->status = One;
 				}

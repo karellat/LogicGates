@@ -25,7 +25,7 @@ enum Status
 class Signal
 {
 public:
-	Signal(Status s, size_t to_id, size_t from_id) : status(s), toID(to_id), fromID(from_id) {}; 
+	Signal(Status s, size_t from_id, size_t to_id) : status(s), toID(to_id), fromID(from_id) {}; 
 	~Signal(){}
 	Status status;
 	size_t toID;

@@ -1,6 +1,5 @@
 #include "workbench.h"
 
-#define Debug
 
 Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruction)
 {
@@ -30,8 +29,8 @@ Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruc
 	vertexNames["I"] = inputVertex;
 	vertexNames["O"] = outputVertex;
 	//add empty pins 
-	unordered_set<size_t>& in = unconnectedOutPins[inputVertex]; 
-	unordered_set<size_t>& out = unconnectedInPins[outputVertex];
+	unordered_set<size_t>& in = unconnectedFromPins[inputVertex]; 
+	unordered_set<size_t>& out = unconnectedToPins[outputVertex];
 	
 	for (size_t i = 0; i < inputSize; i++)
 	{
@@ -74,14 +73,18 @@ void Workbench::Add(const std::string& name, const std::string& typeName)
 	Gate * g = gateTypes[typeName].get();
 	//Add new vertex of given type to the Graph 
 	vertexNames[name] = graph->add_vertex(g);
+	if(typeid(*g) == typeid(ConstGate0) || typeid(*g) == typeid(ConstGate1))
+	{
+		constGates.push_back(vertexNames[name]);
+	}
 	//add free ids of pins 
 	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfInput(); i++)
 	{
-		unconnectedInPins[vertexNames[name]].insert(i);
+		unconnectedToPins[vertexNames[name]].insert(i);
 	}
 	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfOutput(); i++)
 	{
-		unconnectedOutPins[vertexNames[name]].insert(i);
+		unconnectedFromPins[vertexNames[name]].insert(i);
 	}
 }
 //Connect fromName vertex to toName vertex using given pins IDs - if names of vector does not exists throw 
@@ -98,46 +101,43 @@ void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const 
 
 	//check if pins are free
     //TODO: remove debug code;
-	//unordered_set<size_t>& fromP = unconnectedOutPins[from];
-	//unordered_set<size_t>& toP = unconnectedInPins[to];
+	//unordered_set<size_t>& fromP = unconnectedFromPins[from];
+	//unordered_set<size_t>& toP = unconnectedToPins[to];
 
-	if (unconnectedInPins[to].find(toPin) == unconnectedInPins[to].end())
+	if (unconnectedToPins[to].find(toPin) == unconnectedToPins[to].end())
 		throw opin; 
-	if (unconnectedOutPins[from].find(fromPin) == unconnectedOutPins[from].end())
+	if (unconnectedFromPins[from].find(fromPin) == unconnectedFromPins[from].end())
 		throw opin; 
 
 	//make connection between from and  to 
 	graph->connect(from, to, make_unique<Signal>(Floating, fromPin, toPin));
 
 	//Remove connected pins 
-	unconnectedInPins[to].erase(toPin);
-	unconnectedOutPins[from].erase(fromPin);
+	unconnectedToPins[to].erase(toPin);
+	unconnectedFromPins[from].erase(fromPin);
 }
-
-
 //Check correction of logic network
-bool Workbench::ConstructBench()
+void Workbench::ConstructBench()
 {
 	//TODO: log 
 	//Check if all pins are connected
-	if (any_of(unconnectedInPins.begin(), unconnectedInPins.end(), [](auto&& p) {return !p.second.empty(); }))
-		return false; 
-	if (any_of(unconnectedOutPins.begin(), unconnectedOutPins.end(), [](auto&& p) {return !p.second.empty(); }))
-		return false; 
+	if (any_of(unconnectedToPins.begin(), unconnectedToPins.end(), [](auto&& p) {return !p.second.empty(); }))
+		throw fpin;
+	if (any_of(unconnectedFromPins.begin(), unconnectedFromPins.end(), [](auto&& p) {return !p.second.empty(); }))
+		throw fpin;
 	//Check availability, 
 	//TODO:copy of vertex pointers
 	vector<gvertex> startingPoints = constGates;
 	startingPoints.push_back(inputVertex);
-	if(!graph->all_vertices_available_from(startingPoints))
-		return false;
+	if (!graph->all_vertices_available_from(startingPoints))
+		throw npart;
 
 	//Check cycles 
 	//TODO:copy of vertex pointers
 	if (graph->cycle_detection())
-		return false; 
+		throw dcycle;
+	
 	status = Constructed;
-
-	return true; 
 }
 
 //Simulate evaluation of the logical network 
@@ -153,7 +153,16 @@ void Workbench::SetInput(const vector<bool>& input)
 		i->value->status = input[i->value->fromID] ? One : Zero;
 		actualTact.insert(i->to);
 	}
-	for_each(constGates.begin(), constGates.end(), [&actualTact](gvertex g) {actualTact.insert(g); });
+	for (auto c : constGates)
+	{
+		vector<gedge> constFrom = graph->edges_from(c);
+		for (auto i : constFrom)
+		{
+			vector<bool> blank; 
+			i->value->status = c->value->Update(blank)[0] ? One : Zero;
+ 			actualTact.insert(i->to);
+		}
+	}
 	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
 	while (!outputSet)
 	{
@@ -164,7 +173,7 @@ void Workbench::SetInput(const vector<bool>& input)
 			bool evaluated = true;
 			vector<gedge> toG = graph->edges_to(g);
 			vector<bool> inputG;
-			inputG.resize(SizeOfOutput());
+			inputG.resize(g->value->GetLengthOfInput());
 			for (auto i : toG)
 			{
 				if (i->value->status == One)
@@ -196,8 +205,7 @@ void Workbench::SetInput(const vector<bool>& input)
 			vector<gedge> fromG = graph->edges_from(g);
 			for (auto i : fromG)
 			{
-
-				if (outputG[i->value->toID])
+				if (outputG[i->value->fromID])
 				{
 					i->value->status = One;
 				}
@@ -277,8 +285,8 @@ void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOu
 	constGates.clear();
 	//clear old vertex names
 	vertexNames.clear();
-	unconnectedOutPins.clear();
-	unconnectedInPins.clear();
+	unconnectedFromPins.clear();
+	unconnectedToPins.clear();
 	//create new io gate of given sizes 
 	inputGate = make_unique<InputGate>(newInputSize);
 	outputGate = make_unique<OutputGate>(newOutputSize);
@@ -287,8 +295,8 @@ void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOu
 	vertexNames["I"] = inputVertex;
 	vertexNames["O"] = outputVertex;
 	//add empty pins 
-	unordered_set<size_t>& in = unconnectedOutPins[inputVertex];
-	unordered_set<size_t>& out = unconnectedInPins[outputVertex];
+	unordered_set<size_t>& in = unconnectedFromPins[inputVertex];
+	unordered_set<size_t>& out = unconnectedToPins[outputVertex];
 
 	for (size_t i = 0; i < newInputSize; i++)
 	{
