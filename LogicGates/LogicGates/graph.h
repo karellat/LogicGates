@@ -79,7 +79,7 @@ struct Graph {
 
 
 	bool cycle_detection();
-	bool all_vertices_available_from(vector<vtype *> from);
+	bool all_vertices_available_from(const vector<vtype*>& from);
 
 };
 
@@ -149,7 +149,7 @@ bool Graph<VertexValue, EdgeValue>::cycle_detection()
 }
 
 template <typename VertexValue, typename EdgeValue>
-bool Graph<VertexValue, EdgeValue>::all_vertices_available_from(vector<vtype*> from)
+bool Graph<VertexValue, EdgeValue>::all_vertices_available_from(const vector<typename Graph<VertexValue, EdgeValue>::vtype*>& from)
 {
 	std::stack<vtype*> stack;
 	std::unordered_set<vtype *> closed;

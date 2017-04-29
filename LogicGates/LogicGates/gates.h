@@ -38,8 +38,7 @@ private:
 
 class Gate {
 public:
-	Gate(){}
-	Gate(size_t inputSize, size_t outputSize, std::string name) 
+	Gate(size_t inputSize, size_t outputSize, const std::string& name) 
 	: result(false), input_size(inputSize), output_size(outputSize),name(name)
 	{
 		resultValues.resize(outputSize);
@@ -65,7 +64,6 @@ class InputGate : public Gate
 {
 public:
 	InputGate(std::size_t inputSize) : Gate(0, inputSize, "INPUT"){}
-	~InputGate() {}
 
 	std::vector<bool> Update(const std::vector<bool>& input) override
 	{
@@ -80,7 +78,6 @@ class OutputGate : public Gate
 {
 public:
 	OutputGate(std::size_t outputSize) : Gate(outputSize,0,"OUTPUT"){}
-	~OutputGate(){}
 
 	std::vector<bool> Update(const std::vector<bool>& input) override
 	{ 
@@ -94,7 +91,6 @@ class BlankGate : public Gate
 {
 public:
 	BlankGate() : Gate(1, 0, "BLANK") {}
-	~BlankGate(){}
 
 	std::vector<bool> Update(const std::vector<bool>& input) override
 	{
@@ -110,7 +106,6 @@ public:
 		result = true;
 		resultValues[0] = false; 
 	}
-	~ConstGate0(){}
 	std::vector<bool> Update(const std::vector<bool>& input) override { return resultValues; }
 
 };

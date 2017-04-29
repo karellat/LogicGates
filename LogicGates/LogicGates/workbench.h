@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <numeric>
-
+#include <assert.h>
 static class invalidworkbenchstatus : public exception
 {
 public:
@@ -94,18 +94,18 @@ public:
 	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
 	//Actions while constructing
 	//Add new vertex of typeName called name 
-	void Add(std::string name, std::string typeName);
-	void Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin);
+	void Add(const std::string& name, const std::string& typeName);
+	void Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin);
 	//Construction: 
 	bool ConstructBench();
 
 
 	//Actions while constructed
 	// I/0 set up: 
-	void SetInput(vector<bool> input);
+	void SetInput(const vector<bool>& input);
 	vector<bool> ReadOutput() const;
 
-	void ConstructUserGate(string name, size_t newInputSize, size_t newOutputSize); 
+	void ConstructUserGate(const string& name, size_t newInputSize, size_t newOutputSize); 
 	const string& GetTestOutput() const { return testOutput; }
 	//delete current logic network 
 	void ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOutputSize);
