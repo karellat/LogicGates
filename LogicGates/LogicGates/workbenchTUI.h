@@ -2,12 +2,16 @@
 #include "workbench.h"
 #include <memory>
 #include <fstream>
+#include <sstream>
+#include <locale>
 
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(std::streambuf* output, std::streambuf* input) : output(output), input(input), exiting(false),readyForConstruction(false), workbench(std::make_unique<Workbench>())
-	{}
+	WorkbenchTUI(std::streambuf* output, std::streambuf* input, streambuf* log) : output(output), input(input), log(log), exiting(false), reseting(false), constructing(false), readyForConstruction(false)
+	{
+	}
+
 	~WorkbenchTUI()
 	{
 		output.flush();
@@ -45,7 +49,8 @@ protected:
 	bool ReadConnectionLine(); 
 
 	//Construction 
-	bool ConstructGate();
+		//Construct user defined Gate
+	bool ConstructGate(size_t newInputSize, size_t newOutputSize, string actualName);
 
 	// Streams: 
 	std::ostream output;
@@ -63,6 +68,8 @@ protected:
 	string connectionTag = "#CONNECT";
 	std::size_t maxSizeOfTag = 40;
 	std::string forbidenChars = "\n\t ";
+	string inputTag = "#INPUT";
+	string outputTag = "#OUTPUT"; 
 	std::vector<string> Split(std::string s, char delimeter, StringSplitOption option);
 	std::string ToUpper(std::string s);
 	bool ParsePin(string input, std::pair<string, std::size_t>& pair);

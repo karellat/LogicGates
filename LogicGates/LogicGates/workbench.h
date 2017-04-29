@@ -22,7 +22,8 @@ public:
 	const unique_ptr<vector<string>> ListOfType() const;
 	const std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
 	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
-	//Actions while constructing	
+	//Actions while constructing
+	//Add new vertex of typeName called name 
 	void Add(std::string name, std::string typeName);
 	void Connect(std::string fromName, std::size_t fromPin, std::string toName, std::size_t toPin);
 	//Construction: 
@@ -60,8 +61,7 @@ protected:
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
-	//if true gate is ready to be created as user defined Gate
-	bool readyForConstruction;
+
 };
 
 class invalidworkbenchstatus : public exception

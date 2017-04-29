@@ -48,14 +48,14 @@ Workbench::Workbench(size_t inputSize, size_t outputSize) : status(UnderConstruc
 const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
 	unique_ptr<vector<string>> out; 
-	for_each(vertexNames.begin(), vertexNames.end(), [&out](pair<string, Gate*>& i) {out->push_back(i.first); });
+	//for_each(vertexNames.begin(), vertexNames.end(), [&out](pair<string, Gate*>& i) {out->push_back(i.first); });
 	return std::move(out);
 }
 //List all types
 const unique_ptr<vector<string>> Workbench::ListOfType() const
 {
 	unique_ptr<vector<string>> out; 
-	for_each(gateTypes.begin(), gateTypes.end(), [&out](auto&& i) {out->push_back(i->Name()); });
+	//for_each(gateTypes.begin(), gateTypes.end(), [&out](pair<string,unique_ptr<Gate>> p) {out->push_back(p.first); });
 	return std::move(out);
 }
 
@@ -72,11 +72,11 @@ void Workbench::Add(std::string name, std::string typeName)
 	//Add new vertex of given type to the Graph 
 	vertexNames[name] = graph->add_vertex(g);
 	//add free ids of pins 
-	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfInput();i++)
+	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfInput(); i++)
 	{
 		unconnectedInPins[vertexNames[name]].insert(i);
 	}
-	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfOutput();i++)
+	for (size_t i = 0; i < vertexNames[name]->value->GetLengthOfOutput(); i++)
 	{
 		unconnectedOutPins[vertexNames[name]].insert(i);
 	}
@@ -107,14 +107,15 @@ void Workbench::Connect(std::string fromName, std::size_t fromPin, std::string t
 	unconnectedOutPins[from].erase(fromPin);
 }
 
+
 //Check correction of logic network
 bool Workbench::ConstructBench()
 {
 	//TODO: log 
 	//Check if all pins are connected
-	if (any_of(unconnectedInPins.begin(), unconnectedInPins.end(), [](unordered_set<size_t>& set) {return !set.empty(); }))
+	if (any_of(unconnectedInPins.begin(), unconnectedInPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		return false; 
-	if (any_of(unconnectedOutPins.begin(), unconnectedOutPins.end(), [](unordered_set<size_t>& set) {return !set.empty(); }))
+	if (any_of(unconnectedOutPins.begin(), unconnectedOutPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		return false; 
 	//Check availability, 
 	//TODO:copy of vertex pointers
@@ -252,7 +253,7 @@ void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOu
 	//if deleteUDG reset created types 
 	if(deleteUDG)
 	{
-		gateTypes.clear; 
+		gateTypes.clear(); 
 		gateTypes["BLANK"] = (make_unique<BlankGate>());
 		gateTypes["CONST0"] = (make_unique<ConstGate0>());
 		gateTypes["CONST1"] = (make_unique<ConstGate1>());

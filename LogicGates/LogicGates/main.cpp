@@ -3,7 +3,6 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "workbench.h"
 #include "workbenchTUI.h"
 using namespace std;
 
@@ -39,7 +38,7 @@ int main(int argc, char *argv[])
 {
 
 	string blank;
-	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf());
+	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf(),cout.rdbuf());
 	bool debugMode = false;
 	vector<string> fileNames;
 	vector<vector<bool>>   inputs;
