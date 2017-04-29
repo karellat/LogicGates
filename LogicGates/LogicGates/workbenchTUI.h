@@ -19,7 +19,8 @@ public:
 	}
 
 	void InteraktiveMode();
-	void PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet);
+	
+	void PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet,bool tryAllInputs);
 protected:
 	bool logTag = true;
 	enum StringSplitOption
@@ -51,6 +52,9 @@ protected:
 	//Construction 
 		//Construct user defined Gate
 	bool ConstructGate(size_t newInputSize, size_t newOutputSize, const string& actualName);
+	//Generate all possible inputs
+	vector<vector<bool>> GenerateInput(const size_t size_of_input);
+
 
 	// Streams: 
 	std::ostream output;

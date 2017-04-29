@@ -31,7 +31,7 @@ void WorkbenchTUI::InteraktiveMode()
 {
 }
 
-void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet)
+void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet, bool tryAllinputs)
 {
 	//Construct all construction files;
 	for (auto path : filePaths)
@@ -39,16 +39,36 @@ void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vec
 		if (!ReadFile(path))
 			return;
 	}
+	//Generate vector of all possible inputs of given lenght or use given vector of bools
 	//Set inputs & read eval if  possible 
-	for (auto input: inputSet)
+	if(tryAllinputs)
 	{
-		if(SetInput(input))
+		vector<vector<bool>> generatedInputSet = GenerateInput(workbench->SizeOfInput());
+		for (auto input : generatedInputSet)
 		{
-	 		vector<bool> o; 
-			if (ReadOutputs(o))
+			if (SetInput(input))
 			{
-				output << "OUTPUT: " << boolsToString(o) << endl;
-				//log << "OUTPUT: " << boolsToString(o); 
+				vector<bool> o;
+				if (ReadOutputs(o))
+				{
+					output << "OUTPUT: " << boolsToString(o) << endl;
+					//log << "OUTPUT: " << boolsToString(o); 
+				}
+			}
+		}
+
+	}
+	else {
+		for (auto input : inputSet)
+		{
+			if (SetInput(input))
+			{
+				vector<bool> o;
+				if (ReadOutputs(o))
+				{
+					output << "OUTPUT: " << boolsToString(o) << endl;
+					//log << "OUTPUT: " << boolsToString(o); 
+				}
 			}
 		}
 	}
@@ -403,6 +423,33 @@ bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, cons
 		return false;
 	}
 	return true;
+}
+
+vector<vector<bool>> WorkbenchTUI::GenerateInput(const size_t size_of_input)
+{
+	//bit adding
+	vector<vector<bool>> out; 
+	vector<bool> v; 
+	for (size_t i=0;i< size_of_input; i++)
+	{
+		v.push_back(false);
+	}
+	out.push_back(v);
+	while (any_of(v.cbegin(), v.cend(), [](bool b) {return !b; }))
+	{
+		size_t index = 0;
+		while(v[index])
+		{
+			v[index] = false; 
+			index++;
+		}
+		v[index] = true;
+		out.push_back(v);
+	}
+
+
+
+	return std::move(out);
 }
 
 
