@@ -96,5 +96,7 @@ int main(int argc, char *argv[])
 		//Run workbench in passive mode: 
 		w->PassiveMode(std::move(fileNames), std::move(inputs));
 	}
+
+	w.release();
 }
 

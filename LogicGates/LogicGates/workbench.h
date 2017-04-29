@@ -5,7 +5,77 @@
 #include <string>
 #include <numeric>
 
+static class invalidworkbenchstatus : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexpected status";
+	}
+} istat;
 
+static class unexistingtypename : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexisting typename";
+	}
+} utype;
+
+static class invalidnameoftype : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Choosen type name exists";
+	}
+}itype;
+
+static class invalidnameofvertex : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Same name of vertex exists";
+	}
+} iname;
+
+static class unexistingnameofvertex : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Unexisting vertex name";
+	}
+} uname;
+
+static class occupiedpin : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Connected pin";
+	}
+} opin;
+
+static class invalidsizeofio : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Input and Output are set to 0, no point of creating that gate";
+	}
+} isize;
+
+static class invalidinputformat : public exception
+{
+public:
+	const char* what() const throw() override
+	{
+		return "Input must have format 1 or 0";
+	}
+} iinput;
 enum WorkbenchStatus
 {
 	UnderConstruction, Constructed, Calculating, Calculated
@@ -64,74 +134,3 @@ protected:
 
 };
 
-class invalidworkbenchstatus : public exception
-{
-public:
-	virtual const char* what() const throw()
-	{
-		return "Unexpected status";
-	}
-} istat;
-
-class unexistingtypename : public exception
-{
-public:
-	virtual const char* what() const throw()
-	{
-		return "Unexisting typename";
-	}
-} utype;
-
-class invalidnameoftype : public exception
-{
-public: 
-	virtual const char* what() const throw()
-	{
-		return "Choosen type name exists";
-	}
-}itype;
-
-class invalidnameofvertex : public exception
-{
-public: 
-	virtual const char* what() const throw()
-	{
-		return "Same name of vertex exists";
-	}
-} iname;
-
-class unexistingnameofvertex : public exception
-{
-public: 
-	virtual const char* what() const throw()
-	{
-		return "Unexisting vertex name";
-	}
-} uname;
-
-class occupiedpin : public exception
-{
-public: 
-	virtual const char* what() const throw()
-	{
-		return "Connected pin";
-	}
-} opin;
-
-class invalidsizeofio : public exception
-{
-public:
-	virtual const char* what() const throw()
-	{
-		return "Input and Output are set to 0, no point of creating that gate";
-	}
-} isize;
-
-class invalidinputformat : public exception
-{
-public:
-	virtual const char* what() const throw()
-	{
-		return "Input must have format 1 or 0";
-	}
-} iinput; 

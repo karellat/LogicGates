@@ -115,7 +115,6 @@ public:
 		result = true;
 		resultValues[0] = true;
 	}
-	~ConstGate1(){}
 	std::vector<bool> Update(std::vector<bool> input) override { return resultValues; }
 };
 
@@ -123,7 +122,6 @@ class NotGate : public Gate
 {
 public:
 	NotGate() : Gate(1,1,"NOT"){} 
-	~NotGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override 
 	{ 
@@ -138,7 +136,6 @@ class OrGate : public Gate
 {
 public: 
 	OrGate() : Gate(2,1,"OR") {} 
-	~OrGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
 	{
@@ -152,7 +149,6 @@ class AndGate : public Gate
 {
 public:
 	AndGate() : Gate(2,1,"AND") {} 
-	~AndGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
 	{
@@ -166,7 +162,6 @@ class XorGate : public Gate
 {
 public:
 	XorGate() : Gate(2,1,"XOR") {} 
-	~XorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override {
 		result = true; 
@@ -205,7 +200,6 @@ public:  NorGate() : Gate(2,1,"NOR") {}
 class XnorGate : public Gate
 {
 public: XnorGate():Gate(2,1,"XNOR"){}
-		~XnorGate(){}
 
 	std::vector<bool> Update(std::vector<bool> input) override
 		{
