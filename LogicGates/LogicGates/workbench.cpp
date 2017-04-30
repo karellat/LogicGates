@@ -4,7 +4,7 @@
 
 Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log) : status(UnderConstruction), log(log)
 {
-	loging = false;
+	loging =true;
 	if(outputSize == 0 )
 	{
 		throw isize; 
@@ -145,111 +145,111 @@ void Workbench::ConstructBench()
 //Simulate evaluation of the logical network 
 void Workbench::SetInput(const vector<bool>& input)
 {
-	//Clean to output signals
-	vector<gedge> toOutput; 
-	toOutput = graph->edges_to(outputVertex);
-	for (auto i: toOutput)
-	{
-		i->value->status = Floating;
-	}
-	//Prepare starting vertex, const & input 
-	unordered_set<gvertex> followingTact; 
-	unordered_set<gvertex> actualTact; 
-	bool outputSet = false; 
-	vector<gedge> inputFrom = graph->edges_from(inputVertex);
-	if (loging)
-		std::cout << logVertexInput(inputVertex, input) << endl;
-	for (auto i : inputFrom)
-	{
-		i->value->status = input[i->value->fromID] ? One : Zero;
-		if (loging)
-			std::cout <<logEdge(i) << endl;
-		actualTact.insert(i->to);
-	}
-	for (auto c : constGates)
-	{
-		if (loging)
-			std::cout << "Vertex: " << c->value->Name() << endl;
-		vector<gedge> constFrom = graph->edges_from(c);
-		for (auto i : constFrom)
+		//Clean to output signals
+		vector<gedge> toOutput; 
+		toOutput = graph->edges_to(outputVertex);
+		for (auto i: toOutput)
 		{
-			vector<bool> blank; 
-			i->value->status = c->value->Update(blank)[0] ? One : Zero;
-			if(loging)
-				std::cout << logEdge(i) << endl;
- 			actualTact.insert(i->to);
+			i->value->status = Floating;
 		}
-	}
-	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
-	while (!outputSet)
-	{
-
-		for (auto g : actualTact)
+		//Prepare starting vertex, const & input 
+		unordered_set<gvertex> followingTact; 
+		unordered_set<gvertex> actualTact; 
+		bool outputSet = false; 
+		vector<gedge> inputFrom = graph->edges_from(inputVertex);
+		if (loging)
+			std::cout << logVertexInput(inputVertex, input) << endl;
+		for (auto i : inputFrom)
 		{
-			//Read inputs, if any of them  floating add vertex to  following tact
-			bool evaluated = true;
-			vector<gedge> toG = graph->edges_to(g);
-			vector<bool> inputG;
-			inputG.resize(g->value->GetLengthOfInput());
-			for (auto i : toG)
-			{
-				if (i->value->status == One)
-				{
-					inputG[i->value->toID] = true;
-				}
-				else if (i->value->status == Zero)
-				{
-					inputG[i->value->toID] = false;
-				}
-				else
-				{
-					evaluated = false;
-					followingTact.insert(g);
-					break;
-				}
-			}
-			if (!evaluated) continue;
-
-			//decided if OutputVertex is set;
-			if (g == outputVertex)
-			{
-				outputSet = true;
-				break;
-
-			}
-			//Count logical function of gate & set outputs
+			i->value->status = input[i->value->fromID] ? One : Zero;
 			if (loging)
-				std::cout << logVertexInput(g, inputG);
-			vector<bool> outputG = g->value->Update(inputG);
-			//Clean value from ingoing signal 
-			for (auto i : toG)
-			{
-				i->value->status = Floating;
-			}
+				std::cout <<logEdge(i) << endl;
+			actualTact.insert(i->to);
+		}
+		for (auto c : constGates)
+		{
 			if (loging)
-				std::cout << logVertexOutput(g, outputG);
-			vector<gedge> fromG = graph->edges_from(g);
-			for (auto i : fromG)
+				std::cout << "Vertex: " << c->value->Name() << endl;
+			vector<gedge> constFrom = graph->edges_from(c);
+			for (auto i : constFrom)
 			{
-				if (outputG[i->value->fromID])
-				{
-					i->value->status = One;
-				}
-				else
-				{
-					i->value->status = Zero;
-				}
+				vector<bool> blank; 
+				i->value->status = c->value->Update(blank)[0] ? One : Zero;
 				if(loging)
 					std::cout << logEdge(i) << endl;
-				//if no discovered vertex add to the following tact
-				if (actualTact.find(i->to) == actualTact.end())
-					followingTact.insert(i->to);
+ 				actualTact.insert(i->to);
 			}
-
 		}
-		actualTact = followingTact;
-		followingTact.clear();
-	}
+		//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
+		while (!outputSet)
+		{
+
+			for (auto g : actualTact)
+			{
+				//Read inputs, if any of them  floating add vertex to  following tact
+				bool evaluated = true;
+				vector<gedge> toG = graph->edges_to(g);
+				vector<bool> inputG;
+				inputG.resize(g->value->GetLengthOfInput());
+				for (auto i : toG)
+				{
+					if (i->value->status == One)
+					{
+						inputG[i->value->toID] = true;
+					}
+					else if (i->value->status == Zero)
+					{
+						inputG[i->value->toID] = false;
+					}
+					else
+					{
+						evaluated = false;
+						followingTact.insert(g);
+						break;
+					}
+				}
+				if (!evaluated) continue;
+
+				//decided if OutputVertex is set;
+				if (g == outputVertex)
+				{
+					outputSet = true;
+					break;
+
+				}
+				//Count logical function of gate & set outputs
+				if (loging)
+					std::cout << logVertexInput(g, inputG);
+				vector<bool> outputG = g->value->Update(inputG);
+				//Clean value from ingoing signal 
+				for (auto i : toG)
+				{
+					i->value->status = Floating;
+				}
+				if (loging)
+					std::cout << logVertexOutput(g, outputG);
+				vector<gedge> fromG = graph->edges_from(g);
+				for (auto i : fromG)
+				{
+					if (outputG[i->value->fromID])
+					{
+						i->value->status = One;
+					}
+					else
+					{
+						i->value->status = Zero;
+					}
+					if(loging)
+						std::cout << logEdge(i) << endl;
+					//if no discovered vertex add to the following tact
+					if (actualTact.find(i->to) == actualTact.end())
+						followingTact.insert(i->to);
+				}
+
+			}
+			actualTact = followingTact;
+			followingTact.clear();
+		}
 	status = Calculated;
 }
 //Return  read output 

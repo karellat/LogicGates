@@ -1,11 +1,15 @@
 #include "gates.h" 
 #include <set>
+#include "workbench.h"
 
 
 std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 {
-	//TODO:Same code as workbench
-	//Prepare starting vertex, const & input 
+	vector<gedge> toOutput = graph->edges_to(outputVertex);
+	for (auto i : toOutput)
+	{
+		i->value->status = Floating;
+	}
 	//Prepare starting vertex, const & input 
 	unordered_set<gvertex> followingTact;
 	unordered_set<gvertex> actualTact;
@@ -29,6 +33,7 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 	//While not all output sets due to cycle and availability check, there is always a way to set all outputs 
 	while (!outputSet)
 	{
+
 		for (auto g : actualTact)
 		{
 			//Read inputs, if any of them  floating add vertex to  following tact
@@ -64,6 +69,11 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 			}
 			//Count logical function of gate & set outputs
 			vector<bool> outputG = g->value->Update(inputG);
+			//Clean value from ingoing signal 
+			for (auto i : toG)
+			{
+				i->value->status = Floating;
+			}
 			vector<gedge> fromG = graph->edges_from(g);
 			for (auto i : fromG)
 			{
@@ -75,27 +85,31 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 				{
 					i->value->status = Zero;
 				}
-				followingTact.insert(i->to);
+				//if no discovered vertex add to the following tact
+				if (actualTact.find(i->to) == actualTact.end())
+					followingTact.insert(i->to);
 			}
 
 		}
 		actualTact = followingTact;
 		followingTact.clear();
 	}
-	// read output values 
+
 	vector<bool> outputBool;
-	outputBool.resize(output_size);
-	vector<gedge> toOutput = graph->edges_to(outputVertex);
-	for (auto i : toOutput)
+	outputBool.resize(outputGate->GetLengthOfInput());
+	vector<gedge> toOutputEdges = graph->edges_to(outputVertex);
+	for (auto i : toOutputEdges)
 	{
 		if (i->value->status == One)
 			outputBool[i->value->toID] = true;
 		else if (i->value->status == Zero)
 			outputBool[i->value->toID] = false;
 		else
-			throw isignal;
+		{
+			//TODO: own expection 
+			throw new exception;
+		}
 	}
-
 	return std::move(outputBool);
 	
 }
