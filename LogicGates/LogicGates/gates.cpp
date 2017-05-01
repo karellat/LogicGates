@@ -106,8 +106,7 @@ std::vector<bool> UserDefinedGateModel::Update(const std::vector<bool>& input)
 			outputBool[i->value->toID] = false;
 		else
 		{
-			//TODO: own expection 
-			throw new exception;
+			throw isignal;
 		}
 	}
 	return std::move(outputBool);

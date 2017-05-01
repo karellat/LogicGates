@@ -8,7 +8,7 @@
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(std::streambuf* output, std::streambuf* input, streambuf* log) : output(output), input(input), log(log), exiting(false), reseting(false), constructing(false), readyForConstruction(false)
+	WorkbenchTUI(std::streambuf* output, std::streambuf* input, streambuf* log, bool loging) : output(output), log(log), input(input), exiting(false), reseting(false), constructing(false), readyForConstruction(false), loging(loging)
 	{
 	}
 
@@ -86,4 +86,5 @@ protected:
 	bool reseting;
 	bool constructing;
 	bool readyForConstruction;
+	bool loging; 
 };

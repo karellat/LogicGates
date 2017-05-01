@@ -2,13 +2,14 @@
 #include <iostream>
 
 
-Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log) : status(UnderConstruction), log(log)
+Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log,bool loging) : status(UnderConstruction), log(log),loging(loging)
 {
-	loging = false;
+
 	if(outputSize == 0 )
 	{
 		throw isize; 
 	}
+	status = UnderConstruction;
 	//Graph & Standart Gates  init  
 	graph = std::make_unique<Graph<Gate*, std::unique_ptr<Signal>>>(); 
 	gateTypes["BLANK"] =(make_unique<BlankGate>());
@@ -70,6 +71,8 @@ const unique_ptr<vector<string>> Workbench::ListOfType() const
 //Add new gate to the network with "name" of "typeName". If typeName does not exist as a type throws out_of_range exception. If vertex named same as name throws. 
 void Workbench::Add(const std::string& name, const std::string& typeName)
 {
+	//Check state of the bench 
+	CheckState(UnderConstruction);
 	//Check existing type and unambiguity of name
 	if (gateTypes.find(typeName) == gateTypes.end())
 		throw utype;
@@ -96,6 +99,7 @@ void Workbench::Add(const std::string& name, const std::string& typeName)
 //Connect fromName vertex to toName vertex using given pins IDs - if names of vector does not exists throw 
 void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin)
 {
+	CheckState(UnderConstruction);
 	//Find vertex
 	if (vertexNames.find(fromName) == vertexNames.end())
 		throw uname;
@@ -125,6 +129,7 @@ void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const 
 //Check correction of logic network
 void Workbench::ConstructBench()
 { 
+	CheckState(UnderConstruction);
 	//Check if all pins are connected
 	if (any_of(unconnectedToPins.begin(), unconnectedToPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		throw fpin;
@@ -146,6 +151,8 @@ void Workbench::ConstructBench()
 //Simulate evaluation of the logical network 
 void Workbench::SetInput(const vector<bool>& input)
 {
+		CheckState(Calculated, Constructed);
+		status = Calculating;
 		//Clean to output signals
 		vector<gedge> toOutput; 
 		toOutput = graph->edges_to(outputVertex);
@@ -256,7 +263,7 @@ void Workbench::SetInput(const vector<bool>& input)
 //Return  read output 
 vector<bool> Workbench::ReadOutput() const
 {
-	if (status != Calculated) throw istat;
+	CheckState(Calculated);
 	vector<bool> outputBool;
 	outputBool.resize(SizeOfOutput());
 	vector<gedge> toOutput = graph->edges_to(outputVertex);
@@ -275,8 +282,7 @@ vector<bool> Workbench::ReadOutput() const
 
 void Workbench::ConstructUserGate(const string& name, size_t newInputSize, size_t newOutputSize)
 {
-	if (status == UnderConstruction)
-		throw istat;
+	CheckState(Calculated, Constructed);
 	//Create new gate type with selected name 
 	unique_ptr<UserDefinedGateModel> newUserGate = make_unique<UserDefinedGateModel>(std::move(graph), std::move(inputGate), inputVertex,
 		std::move(outputGate), outputVertex,constGates, name);
@@ -336,6 +342,19 @@ void Workbench::ResetWorkbench(bool deleteUDG, size_t newInputSize, size_t newOu
 	{
 		out.insert(i);
 	}
+	status = UnderConstruction;
+}
+
+void Workbench::CheckState(WorkbenchStatus s) const
+{
+	if (status != s)
+		throw istat; 
+}
+
+void Workbench::CheckState(WorkbenchStatus a, WorkbenchStatus b) const
+{
+	if (status != a && status != b)
+		throw istat;
 }
 
 string Workbench::boolsToString(const vector<bool>& bools)
