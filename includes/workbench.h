@@ -112,27 +112,20 @@ class Workbench
 {
 public:
 
-	Workbench(size_t inputSize, size_t outputSize,streambuf* log);
+	Workbench(size_t inputSize, size_t outputSize,streambuf* log,bool loging);
 	WorkbenchStatus status;
 
-	//Names for user output
+	//DEBUG info: 
 	const unique_ptr<vector<string>> ListOfNamedVertex() const;
 	const unique_ptr<vector<string>> ListOfType() const;
-	const std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
-	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
+	std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
+	std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
 	//Actions while constructing
 	//Add new vertex of typeName called name 
 	void Add(const std::string& name, const std::string& typeName);
 	void Connect(const std::string& fromName, std::size_t fromPin, const std::string& toName, std::size_t toPin);
 	//Construction: 
 	void ConstructBench();
-	//Activate logging 
-	void Log(streambuf* log)
-	{
-		
-	}
-
-
 	//Actions while constructed
 	// I/0 set up: 
 	void SetInput(const vector<bool>& input);
@@ -167,7 +160,9 @@ protected:
 	//Names of vertex, name must be unique
 	std::unordered_map<string, gvertex> vertexNames;
 	string testOutput;
-	//TODO: CHECK STATES
+	//Check state, throws istat
+	void CheckState(WorkbenchStatus s) const;
+	void CheckState(WorkbenchStatus a, WorkbenchStatus b) const;
 	//loging methods 
 	static string boolsToString(const vector<bool>&  bools); 
 	string logEdge(const gedge& edge) const;

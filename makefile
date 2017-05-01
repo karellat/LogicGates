@@ -1,5 +1,5 @@
 CXX	:= g++-6
-CXXFLAGS	:= -std=c++14 
+CXXFLAGS	:= -g -pedantic -std=c++14 -Wextra -fno-omit-frame-pointer
 #-g3 -fuse-ld=gold -fsanitize=address 
 INC	:= -I includes
 
@@ -32,4 +32,13 @@ convert:
 
 test1: compile
 	./bin/main -f examples/XORAND.txt examples/ADDW.txt -a
-
+test2: compile 
+	./bin/main -f examples/XORAND.txt examples/ADDW.txt examples/ADD4.txt -a
+test3: compile
+	./bin/main -f examples/allgate.txt -a
+test4: compile
+	./bin/main -f examples/DAND.txt -a 
+test5: compile
+	./bin/main -f examples/DXOR.txt -a
+test6: compile
+	./bin/main -f examples/example.txt -a

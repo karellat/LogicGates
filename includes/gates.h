@@ -58,12 +58,16 @@ protected:
 	size_t output_size; 
 	//Logging info
 	std::string name; 
+	explicit  Gate(size_t inputSize,size_t outputSize) : result(false), input_size(inputSize), output_size(outputSize)
+	{
+		resultValues.resize(outputSize);
+	}
 };
 
 class InputGate : public Gate
 {
 public:
-	InputGate(std::size_t inputSize) : Gate(0, inputSize, "INPUT"){}
+	explicit InputGate(std::size_t inputSize) : Gate(0, inputSize, "INPUT"){}
 
 	std::vector<bool> Update(const std::vector<bool>& input) override
 	{
@@ -72,12 +76,13 @@ public:
 		return input;
 	}
 protected:
-	InputGate(string name) : Gate(0, 1, name) {}
+	explicit InputGate(string& name) : Gate(0, 1, name) {}
+	explicit InputGate() : Gate(0, 1) {};
 };
 class OutputGate : public Gate
 {
 public:
-	OutputGate(std::size_t outputSize) : Gate(outputSize,0,"OUTPUT"){}
+	explicit OutputGate(std::size_t outputSize) : Gate(outputSize,0,"OUTPUT"){}
 
 	std::vector<bool> Update(const std::vector<bool>& input) override
 	{ 
@@ -101,8 +106,9 @@ public:
 class ConstGate0 : public InputGate
 {
 public:
-	ConstGate0() : InputGate("CONST0")
+	ConstGate0() : InputGate()
 	{
+		name = "CONST0";
 		result = true;
 		resultValues[0] = false; 
 	}
@@ -113,8 +119,9 @@ public:
 class ConstGate1 : public InputGate
 {
 public: 
-	ConstGate1() : InputGate("CONST1") 
+	ConstGate1() : InputGate() 
 	{ 
+		name = "CONST1";
 		result = true;
 		resultValues[0] = true;
 	}
@@ -229,8 +236,8 @@ public: DoubleGate() :Gate(1,2,"DOUBLE"){}
 class UserDefinedGateModel : public Gate
 {
 public: 
-	UserDefinedGateModel(std::unique_ptr<Graph<Gate*, unique_ptr<Signal>>> graph, std::unique_ptr<Gate> inputGate, gvertex inputVertex,
-		std::unique_ptr<Gate> outputGate, gvertex outputVertex,vector<gvertex> constGates,string name) 
+	UserDefinedGateModel(std::unique_ptr<Graph<Gate*, unique_ptr<Signal>>>&& graph, std::unique_ptr<Gate>&& inputGate, gvertex inputVertex,
+		std::unique_ptr<Gate>&& outputGate,gvertex outputVertex,const vector<gvertex>& constGates,const string& name) 
 		: Gate(inputGate->GetLengthOfOutput(),outputGate->GetLengthOfInput(),name),graph(std::move(graph)), inputGate(std::move(inputGate)),inputVertex(inputVertex)
 	, outputGate(std::move(outputGate)),outputVertex(outputVertex), constGates(std::move(constGates)){} 
 	

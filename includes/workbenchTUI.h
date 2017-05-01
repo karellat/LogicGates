@@ -8,7 +8,7 @@
 class WorkbenchTUI
 {
 public:
-	WorkbenchTUI(std::streambuf* output, std::streambuf* input, streambuf* log) : output(output), input(input), log(log), exiting(false), reseting(false), constructing(false), readyForConstruction(false)
+	WorkbenchTUI(std::streambuf* output, std::streambuf* input, streambuf* log, bool loging) : output(output), log(log), input(input), workbench(make_unique<Workbench>(1,1,log,loging)), exiting(false), reseting(false), constructing(false), readyForConstruction(false), loging(loging)
 	{
 	}
 
@@ -33,7 +33,7 @@ protected:
 	//Interactive mode of setting inputs to gate
 	void InteractiveSeting();
 	//Interactive mode of reading and constructing construction files 
-	bool InteractiveReadingFile();
+	void InteractiveReadingFile();
 	//Set input of the logical network 
 	bool SetInput(const vector<bool>& inputSettings);
 	//Reads output from network
@@ -86,4 +86,5 @@ protected:
 	bool reseting;
 	bool constructing;
 	bool readyForConstruction;
+	bool loging; 
 };

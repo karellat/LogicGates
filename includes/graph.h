@@ -11,7 +11,7 @@ using namespace std;
 template <typename VertexValue>
 struct Vertex {
 	VertexValue value;
-	Vertex(VertexValue v) : value(std::move(v)) {}
+	explicit Vertex(VertexValue v) : value(std::move(v)) {}
 };
 
 template <typename VertexValue,typename EdgeValue>
@@ -21,7 +21,7 @@ struct Edge {
 	vtype* to;
 	EdgeValue value;
 
-	Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(std::move(value)) {}
+	explicit Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(std::move(value)) {}
 };
 
 template <typename VertexValue, typename EdgeValue>
@@ -82,7 +82,7 @@ struct Graph {
 	bool all_vertices_available_from(const vector<vtype*>& from);
 
 };
-
+//Cycle detection with only one component
 template <typename VertexValue, typename EdgeValue>
 bool Graph<VertexValue, EdgeValue>::cycle_detection()
 {
@@ -98,7 +98,7 @@ bool Graph<VertexValue, EdgeValue>::cycle_detection()
 			stack.push(v.get());
 		}
 	}
-	if (stack.size() == 0)
+	if (stack.empty())
 	{
 		stack.push(vertices[0].get());
 	}
@@ -127,7 +127,6 @@ bool Graph<VertexValue, EdgeValue>::cycle_detection()
 			//corect, push
 			stack.push(i);
 
-			//TODO: more components 
 		}
 		opened.insert(v);
 		//More components 
@@ -158,7 +157,7 @@ bool Graph<VertexValue, EdgeValue>::all_vertices_available_from(const vector<typ
 	{
 		stack.push(v);	
 	}
-	if (stack.size() == 0)
+	if (stack.empty())
 	{
 		stack.push(vertices[0].get());
 	}

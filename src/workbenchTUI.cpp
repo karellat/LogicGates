@@ -7,7 +7,6 @@ using pin = std::pair<std::string, std::size_t>;
 bool WorkbenchTUI::ReadFile(const string& path)
 {
 	log << "Reading file " + path << endl;
-	string line;
 	if (!OpenFile(path)) return false;
 	//Reading construction file && construct actual workbech if necessarily 
 	if (!ReadDefinitonHeader()) return false;
@@ -29,7 +28,7 @@ bool WorkbenchTUI::ReadFile(const string& path)
 		return false; 
 	}
 	
-	log << "Actual bench was constructed.\n";
+	log << "Actual bench: " << name << " was constructed.\n";
 	//ending tag check
 	output << "Successfull loaded Gate from file " << endl;
 	inputFile.close();
@@ -40,6 +39,21 @@ bool WorkbenchTUI::ReadFile(const string& path)
 
 void WorkbenchTUI::InteraktiveMode()
 {
+	//Interactive Mode of reading construction files 
+	//Read file & construct if  possible: 
+	while (!exiting)
+	{
+		InteractiveReadingFile();
+		if (exiting)
+			continue;
+		InteractiveSeting();
+		if (reseting)
+			readyForConstruction = false;
+		reseting = false; 
+		constructing = false;
+	}
+	
+	
 }
 
 void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet, bool tryAllinputs)
@@ -63,7 +77,6 @@ void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vec
 				if (ReadOutputs(o))
 				{
 					output << "OUTPUT: " << boolsToString(o) << endl;
-					//log << "OUTPUT: " << boolsToString(o); 
 				}
 			}
 		}
@@ -86,17 +99,18 @@ void WorkbenchTUI::PassiveMode(const vector<string>& filePaths, const vector<vec
 }
 void WorkbenchTUI::InteractiveSeting()
 {
-	string line;
+	//TODO: Make new implementation 
 	vector<bool> in;
 	vector<bool> out;
-	string s;
 	while (!exiting && !reseting && !constructing)
 	{
 		string line;
 		output << "Set input(" + to_string(workbench->SizeOfInput())<< "):\t";
 		input >> line;
+		//Test key words 
 		if (ShowHelp(line) || ParseKeyWords(line))
 			continue;
+		//Parse input, if possible
 		if (stringToBools(line, in))
 		{
 			if (SetInput(in))
@@ -116,7 +130,8 @@ void WorkbenchTUI::InteractiveSeting()
 		}
 	}
 }
-bool WorkbenchTUI::InteractiveReadingFile()
+
+void WorkbenchTUI::InteractiveReadingFile()
 {
 	string line;
 	output << "Insert path of input file: " << endl << "\t";
@@ -138,10 +153,10 @@ bool WorkbenchTUI::InteractiveReadingFile()
 		}
 		else
 		{
-			return true;
+			return;
 		}
 	}
-	return true;
+	return;
 }
 
 bool WorkbenchTUI::SetInput(const vector<bool>& inputSettings)
@@ -153,7 +168,6 @@ bool WorkbenchTUI::SetInput(const vector<bool>& inputSettings)
 	}
 	try {
 		workbench->SetInput(inputSettings);
-		string s;
 		output << "Input was set to: " << boolsToString(inputSettings) << endl;
 		return true;
 	}
@@ -163,14 +177,11 @@ bool WorkbenchTUI::SetInput(const vector<bool>& inputSettings)
 		return false;
 	}
 }
-
 bool WorkbenchTUI::ReadOutputs(vector<bool>& outputValue) const
 {
 	outputValue = workbench->ReadOutput();
 	return true;
 }
-
-
 bool WorkbenchTUI::OpenFile(const std::string& path)
 {
 	log << "\tOpening file " + path << endl;
@@ -186,7 +197,6 @@ bool WorkbenchTUI::OpenFile(const std::string& path)
 
 bool WorkbenchTUI::ReadDefinitonHeader()
 {
-
 	//Check first line of file 
 	string line;
 	size_t newInputSize; 
@@ -286,7 +296,9 @@ bool WorkbenchTUI::ReadDefinitonHeader()
 	}
 	else
 	{
-		workbench = make_unique<Workbench>(newInputSize, newOutputSize,std::cin.rdbuf());
+		//MAKE RESET: 
+
+		workbench->ResetWorkbench(false, newInputSize, newOutputSize);
 	}
 
 	//Change name 
@@ -427,6 +439,8 @@ bool WorkbenchTUI::ConstructGate(size_t newInputSize, size_t newOutputSize, cons
 {
 	try {
 		workbench->ConstructUserGate(actualName, newInputSize, newOutputSize);
+		log << "\nGate: " << actualName << " was constructed. " << endl; 
+		log << "\tWorkbench created for INPUT: " + std::to_string(newInputSize) << " OUTPUT: " << std::to_string(newOutputSize) << endl;
 	}
 	catch(exception& e)
 	{
