@@ -115,11 +115,11 @@ public:
 	Workbench(size_t inputSize, size_t outputSize,streambuf* log,bool loging);
 	WorkbenchStatus status;
 
-	//Names for user output
+	//DEBUG info: 
 	const unique_ptr<vector<string>> ListOfNamedVertex() const;
 	const unique_ptr<vector<string>> ListOfType() const;
-	const std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
-	const std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
+	std::size_t SizeOfInput() const { return inputGate->GetLengthOfOutput();}
+	std::size_t SizeOfOutput() const { return outputGate->GetLengthOfInput(); }
 	//Actions while constructing
 	//Add new vertex of typeName called name 
 	void Add(const std::string& name, const std::string& typeName);

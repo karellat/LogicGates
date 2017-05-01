@@ -12,6 +12,7 @@ using namespace std;
 //{
 //	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl << endl; });
 //}
+
 bool argumentTest(char* text)
 {
 	return (std::strcmp(text, "-i") == 0) || (std::strcmp(text, "-f") == 0) || (std::strcmp(text, "-h") == 0) || (std::strcmp(text, "-d") == 0) || (std::strcmp(text, "-a") == 0);
@@ -45,7 +46,7 @@ int main(int argc, char *argv[])
 
 
 
-	if (argc == 1) {
+	if (argc <= 1) {
 		w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf(), cout.rdbuf(), false);
 		w->InteraktiveMode();
 		return 0;

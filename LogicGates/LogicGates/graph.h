@@ -11,7 +11,7 @@ using namespace std;
 template <typename VertexValue>
 struct Vertex {
 	VertexValue value;
-	Vertex(VertexValue v) : value(std::move(v)) {}
+	explicit Vertex(VertexValue v) : value(std::move(v)) {}
 };
 
 template <typename VertexValue,typename EdgeValue>
@@ -21,7 +21,7 @@ struct Edge {
 	vtype* to;
 	EdgeValue value;
 
-	Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(std::move(value)) {}
+	explicit Edge(vtype* from, vtype* to, EdgeValue value) : from(from), to(to), value(std::move(value)) {}
 };
 
 template <typename VertexValue, typename EdgeValue>

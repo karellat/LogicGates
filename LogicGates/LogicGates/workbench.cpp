@@ -2,7 +2,7 @@
 #include <iostream>
 
 
-Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log,bool loging) : status(UnderConstruction), log(log),loging(loging)
+Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log,bool loging) : status(UnderConstruction), loging(loging),log(log)
 {
 
 	if(outputSize == 0 )
@@ -47,6 +47,7 @@ Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log,bool lo
 	
 	
 }
+//DEBUG METHODS 
 //List all names of actual network 
 const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
