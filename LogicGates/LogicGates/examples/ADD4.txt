@@ -1,22 +1,17 @@
 #GATE	ADD4
-i0	INPUT
-i1	INPUT
-i2	INPUT
-i3	INPUT
+#INPUT	4
+#OUTPUT	3
 a1	ADDW
 a2	ADDW
-o0	OUTPUT
-o1	OUTPUT
-o2	OUTPUT
 c0	Const0
 #CONNECT
-i1[0]	->	a1[0]
-i3[0]	->	a1[1]
-c0[0]	->	a1[2]
-a1[0]	->	a2[0]
-i0[0]	->	a2[1]
-i2[0]	->	a2[2]
-a2[0]	->	o0[0]
-a2[1]	->	o1[0]
-a1[1]	->	o2[0]
+c0[0]	->	a1[0]
+i[1]	->	a1[1]
+i[3]	->	a1[2]
+i[0]	->	a2[0]
+i[2]	->	a2[1]
+a1[0]	->	a2[2]
+a1[1]	->	o[2]
+a2[1]	->	o[1]
+a2[0]	->	o[0]
 #
