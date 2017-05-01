@@ -10,22 +10,22 @@ SRC := src
 EXAMDIR  := examples
 
 compile: init convert $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INC) $(OBJECTS) -o $(APPNAME)
-	
+	@$(CXX) $(CXXFLAGS) $(INC) $(OBJECTS) -o $(APPNAME)
+	@echo "Sources were compiled"
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
+	@$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
 
 obj/%.o: src/%.cpp
-	$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
+	@$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@ 
 
 clean: 
-	rm -rf obj/*
-	rm -rf *.o
-	rm -f $(APPNAME)
+	@rm -rf obj/*
+	@rm -rf *.o
+	@rm -f $(APPNAME)
 init: 
-	test -e bin || mkdir bin 
-	test -e obj || mkdir obj
+	@test -e bin || mkdir bin 
+	@test -e obj || mkdir obj
 convert:
 	@bash convertor $(EXAMDIR)
 	@echo "Converting eol of examples" 

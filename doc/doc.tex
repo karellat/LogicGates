@@ -20,18 +20,38 @@
 \maketitle
 \section*{Téma:} Tento program slouží k tvorbě hradlových sítí, následně k simulaci jejich výpočtu a jejich opakovanému využití v dalších hradlových sítích. Propojení sítě je koncipováno přes načítání kostrukčního souboru, který je popsát dále.
 \section*{Kompilace a spouštění:} Pro spuštění na Linux distribucích je nutný překladač g++-6 a GNU Make.  \\
-\begin{lstlisting} [language=bash]
-make
-\end{lstlisting} 
-Zkompiluje zdrojové soubory a spustí interaktivní režim. \\
-\\ \\
-Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší) \\ 
+\begin{itemize}
+\item make compile -  zkompiluje zdrojáky do spustitelného souboru "/bin/main"
+\item make clean - smaže zdrojové zkompilované soubory
+\item make convert - změní eol všech příkladů z CRLF na LF
+\item make test1 - make test6 - zkonstruuje příklad a vyzkouší všechny možné vstupy
+\begin{enumerate}
+\item XORAND ADDW 
+\item XORAND ADDW ADD4
+\item allgate 
+\item DAND
+\item DXOR
+\item example.txt
+\end{enumerate}  
+\end{itemize}
+ \ \\
+Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší). \\ 
 \section*{Uživatelská dokumentace:}
+\subsection*{Interaktivní režim:}
 Po spuštění bez parametrů se otevře interaktivní režim, který vás vyzve k zadání cesty konstrukčního souboru. Po jeho úspěšném zkonstruování se přepne do  režimu vkládání vstupu, kdy pro daný vstup spočítá a vrátí výstup. Dále poskytuje možnost zkonstruovat hradlo pro další použití(klíčové slovo: c).  Po úspěšné konstrukci se opět dostane do režimu načítání souborů. Nyní už může používat jméno prvního konstruovaného hradla jako typ. \\
-\subsection*{Klíčová slova:} 
+\subsection*{Formát vstupu:}
+Vstupy pro hradlovou síť jsou ve formátu řetězce znaků a to 1 pro logickou 1 a  0 pro logickou 0.
+\subsection*{Interaktivní režim - klíčová slova:} 
 \textbf{exit,e} - slouží k ukončení aplikace \\
 \textbf{const, c} - konstruuje zadané hradlo, (jen v režimu, kdy je načtený konstrukční soubor) \\
-\textbf{h,help,man} - zobrazí klíčová slova \\
+\textbf{h, help, man} - zobrazí klíčová slova \\
+\subsection*{Pasivní režim:} 
+Pro spuštění pouze konstrukce a simulace jednotlivých hradel. Lze používat následující argumenty při spouštění main fce.  Pro spuštění v pasivní režimu musí být nastaven alespoň jeden konstručkní soubor a alespoň jeden vstup.\\
+\textbf{-f [file..] }- cesty ke konstručním souborům, které se konstrují dle pořadí \\
+\textbf{-h} - vytiskne argumenty fce \\ 
+\textbf{-i} - vstupy pro poslední generované hradlo, ve formát 1 - pro logickou 1 a 0 - pro logickou nulu, př: pro hradlo DAND: 10 \\
+\textbf{-a} - vyzkouší všechny možné vstupy pro poslední konstruované hradlo a -i ignoruje\\
+\textbf{-d} - zoobrazí debug informace\\
 \subsection*{Konstrukční soubor - formát:}
 Modelový soubor lze nalézt "examples/model.txt".  Ve zmíněné složce je i celá řada příkladů k vyzkoušení programu. \\
 Soubor se skládá ze dvou hlavních částí. Pojmenování hradel, kde deklarujete jméno hradla(noCASE sensitive a smí obsahovat pouze číslice a písmena) k jménu typ hradla. Část druhá, kde se řeší jejich vzájemné propojení. Jednotlivé tagy jsou odděleny tabulátorem. \\
