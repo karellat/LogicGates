@@ -4,7 +4,7 @@
 
 Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log) : status(UnderConstruction), log(log)
 {
-	loging =true;
+	loging = false;
 	if(outputSize == 0 )
 	{
 		throw isize; 
@@ -50,16 +50,20 @@ Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log) : stat
 const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
 	unique_ptr<vector<string>> out; 
-	//TODO: Fix
-	//for_each(vertexNames.begin(), vertexNames.end(), [&out](pair<string, Gate*>& i) {out->push_back(i.first); });
+	for (auto&& i : vertexNames)
+	{
+		out->push_back(i.first);
+	}
 	return std::move(out);
 }
 //List all types
 const unique_ptr<vector<string>> Workbench::ListOfType() const
 {
 	unique_ptr<vector<string>> out; 
-	//TODO: Fix
-	//for_each(gateTypes.begin(), gateTypes.end(), [&out](pair<string,unique_ptr<Gate>> p) {out->push_back(p.first); });
+	for (auto&& i : gateTypes)
+	{
+		out->push_back(i.first);
+	}
 	return std::move(out);
 }
 
@@ -102,9 +106,9 @@ void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const 
 	gvertex to = vertexNames[toName];
 
 	//check if pins are free
-    //TODO: remove debug code;
-	//unordered_set<size_t>& fromP = unconnectedFromPins[from];
-	//unordered_set<size_t>& toP = unconnectedToPins[to];
+    //DEBUG CODE: 
+		//unordered_set<size_t>& fromP = unconnectedFromPins[from];
+		//unordered_set<size_t>& toP = unconnectedToPins[to];
 
 	if (unconnectedToPins[to].find(toPin) == unconnectedToPins[to].end())
 		throw opin; 
@@ -120,22 +124,19 @@ void Workbench::Connect(const std::string& fromName, std::size_t fromPin, const 
 }
 //Check correction of logic network
 void Workbench::ConstructBench()
-{
-	//TODO: log 
+{ 
 	//Check if all pins are connected
 	if (any_of(unconnectedToPins.begin(), unconnectedToPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		throw fpin;
 	if (any_of(unconnectedFromPins.begin(), unconnectedFromPins.end(), [](auto&& p) {return !p.second.empty(); }))
 		throw fpin;
 	//Check availability, 
-	//TODO:copy of vertex pointers
 	vector<gvertex> startingPoints = constGates;
 	startingPoints.push_back(inputVertex);
 	if (!graph->all_vertices_available_from(startingPoints))
 		throw npart;
 
 	//Check cycles 
-	//TODO:copy of vertex pointers
 	if (graph->cycle_detection())
 		throw dcycle;
 	

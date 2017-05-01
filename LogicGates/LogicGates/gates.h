@@ -72,7 +72,7 @@ public:
 		return input;
 	}
 protected:
-	InputGate(string name) : Gate(0, 1, name) {}
+	InputGate(string& name) : Gate(0, 1, name) {}
 };
 class OutputGate : public Gate
 {
@@ -101,8 +101,9 @@ public:
 class ConstGate0 : public InputGate
 {
 public:
-	ConstGate0() : InputGate("CONST0")
+	ConstGate0() : InputGate(name)
 	{
+		name = "CONST0";
 		result = true;
 		resultValues[0] = false; 
 	}
@@ -113,8 +114,9 @@ public:
 class ConstGate1 : public InputGate
 {
 public: 
-	ConstGate1() : InputGate("CONST1") 
+	ConstGate1() : InputGate(name) 
 	{ 
+		name = "CONST1";
 		result = true;
 		resultValues[0] = true;
 	}

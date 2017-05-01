@@ -12,9 +12,9 @@ static void WriteStringVector(vector<string> list)
 {
 	for_each(list.begin(), list.end(), [](auto s) {cout << s << endl << endl; });
 }
-bool argumentTest(string text)
+bool argumentTest(char* text)
 {
-	return (text ==  "-i") || (text == "-f") || (text == "-h") || (text == "-d") || (text == "-a");
+	return (std::strcmp(text, "-i") == 0) || (std::strcmp(text, "-f") == 0) || (std::strcmp(text, "-h") == 0) || (std::strcmp(text, "-d") == 0) || (std::strcmp(text, "-a") == 0);
 }
 
 vector<bool> stringToBools(string text)
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
 	string blank;
 	unique_ptr<WorkbenchTUI> w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf(),cout.rdbuf());
-	bool debugMode = false;
+	//bool debugMode = false;
 	vector<string> fileNames;
 	vector<vector<bool>>   inputs;
 	bool tryAllInputs = false;
@@ -48,13 +48,13 @@ int main(int argc, char *argv[])
 		w->InteraktiveMode();
 	else
 	{
-		size_t index = 1;
+		int index = 1;
 		//Parse parameters:
 		while(index < argc)
 		{
 			if (std::strcmp(argv[index], "-d") == 0)
 			{
-				debugMode = true; 
+				//debugMode = true; 
 				index++;
 			}
 			else if(std::strcmp(argv[index],"-f") == 0)
