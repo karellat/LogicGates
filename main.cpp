@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
 	if (argc <= 1) {
 		w = make_unique<WorkbenchTUI>(cout.rdbuf(), cin.rdbuf(), cout.rdbuf(), false);
-		w->InteraktiveMode();
+		w->InteractiveMode();
 		return 0;
 	}
 

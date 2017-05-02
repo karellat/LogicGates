@@ -18,7 +18,7 @@ public:
 		log.flush();
 	}
 
-	void InteraktiveMode();
+	void InteractiveMode();
 	
 	void PassiveMode(const vector<string>& filePaths, const vector<vector<bool>>& inputSet,bool tryAllInputs);
 protected:
