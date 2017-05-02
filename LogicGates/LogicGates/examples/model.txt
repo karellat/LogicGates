@@ -1,4 +1,6 @@
 #Gate	MyGateName
+#INPUT	sizeOfInput
+#Output	sizeOfOutput
 NameOfGate	Type 
 NameOfGate	Type 
 NameOfGate	Type 
