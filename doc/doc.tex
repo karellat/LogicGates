@@ -19,7 +19,7 @@
 \begin{document}
 \maketitle
 \section*{Téma:} Tento program slouží k tvorbě hradlových sítí, následně k simulaci jejich výpočtu a jejich opakovanému využití v dalších hradlových sítích. Propojení sítě je koncipováno přes načítání kostrukčního souboru, který je popsát dále.
-\section*{Kompilace a spouštění:} Pro spuštění na Linux distribucích je nutný překladač g++-6 a GNU Make.  \\
+\section*{Kompilace a spouštění:} Pro spuštění na Linux distribucích je nutný překladač g++-6 a GNU Make.  Na github branch: linuxB \\
 \begin{itemize}
 \item make compile -  zkompiluje zdrojáky do spustitelného souboru "/bin/main"
 \item make clean - smaže zdrojové zkompilované soubory
@@ -35,7 +35,7 @@
 \end{enumerate}  
 \end{itemize}
  \ \\
-Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší). \\ 
+Pro spuštění na Windows distribucích je program dostupný pouze jako Visual Studio projekt(VS 2015 a vyšší).  Na github branch: master\\ 
 \section*{Uživatelská dokumentace:}
 \subsection*{Interaktivní režim:}
 Po spuštění bez parametrů se otevře interaktivní režim, který vás vyzve k zadání cesty konstrukčního souboru. Po jeho úspěšném zkonstruování se přepne do  režimu vkládání vstupu, kdy pro daný vstup spočítá a vrátí výstup. Dále poskytuje možnost zkonstruovat hradlo pro další použití(klíčové slovo: c).  Po úspěšné konstrukci se opět dostane do režimu načítání souborů. Nyní už může používat jméno prvního konstruovaného hradla jako typ. \\
@@ -57,6 +57,8 @@ Modelový soubor lze nalézt "examples/model.txt".  Ve zmíněné složce je i c
 Soubor se skládá ze dvou hlavních částí. Pojmenování hradel, kde deklarujete jméno hradla(noCASE sensitive a smí obsahovat pouze číslice a písmena) k jménu typ hradla. Část druhá, kde se řeší jejich vzájemné propojení. Jednotlivé tagy jsou odděleny tabulátorem. \\
 \\ \\
 \#GATE\tab MYNAME (1) \\
+\#INPUT\tab sizeOfInput \\
+\#OUPUT\tab sizeOfOutput \\
 NameOfGate \tab Type (2)\\
 NameOfGate	\tab Type \\
 \#CONNECT (3) \\
@@ -65,10 +67,10 @@ NameOfGate[OutputPinID]	 \tab -> \tab	NameOfGate[InputPinID] \\
 \# (5) 
 \\ \\ 
 \begin{enumerate} 
-\item kontrolní tag pro pojmenovácí část souboru a jméno vašeho hradla (oddělené tabulátorem)
+\item kontrolní tag pro pojmenovácí část souboru a jméno vašeho hradla (oddělené tabulátorem) na dalších řádcích tagy pro zadání velikosti vstupu \& výstupu 
 \item jméno hradla(pouze písmena a číslice) dále typ(predefinovaný či už zkonstruovaný) vzájemně odděleny tabulátorem. 
 \item  kontrolní tag pro začátek propojovací část souboru
-\item  jméno hradla a v hranatých závorkách číslo výstupního pinu dále "->" oddělená z obou stran tabulátorem jméno hradla s číslem vstupního pinu. 
+\item  jméno hradla a v hranatých závorkách číslo výstupního pinu dále "->" oddělená z obou stran tabulátorem jméno hradla s číslem vstupního pinu. Pro připojení vstupu je přednastaveno jméno I a pro připojení výstupu přednastaveno jméno O.
 \item kontrolní tag konce konstr. souboru
 \end{enumerate} 
 Pro konstrukci musí být připojeny u hradel všechny vstupní i výstupní piny, konstrukt musí obsahovat alespoň jedno hradlo vstupní a alespoň jedno výstupní. 
@@ -84,6 +86,7 @@ Pro konstrukci musí být připojeny u hradel všechny vstupní i výstupní pin
 \item NOR
 \item XNOR
 \end{itemize}
+\newpage
 \item Ostatní 
 \begin{itemize}
 \item Input
