@@ -1,0 +1,23 @@
+#GATE	ADDW
+#INPUT	6
+#OUTPUT	1
+AND1	AND
+AND2	AND
+OR1	OR
+OR2	OR
+XOR	XOR
+NOT	NOT
+#CONNECT
+I[0]	->	AND1[0]
+I[1]	->	AND1[1]
+I[2]	->	OR1[0]
+I[3]	->	OR1[1]
+I[4]	->	XOR[0]
+I[5]	->	XOR[1]
+AND1[0]	->	OR2[0]
+OR1[0]	->	OR2[1]
+OR2[0]	->	AND2[0]
+XOR[0]	->	AND2[1]
+AND2[0]	->	NOT[0]
+NOT[0]	->	O[0]
+#

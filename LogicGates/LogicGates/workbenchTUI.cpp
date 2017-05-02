@@ -37,7 +37,7 @@ bool WorkbenchTUI::ReadFile(const string& path)
 	return true;
 }
 
-void WorkbenchTUI::InteraktiveMode()
+void WorkbenchTUI::InteractiveMode()
 {
 	//Interactive Mode of reading construction files 
 	//Read file & construct if  possible: 
