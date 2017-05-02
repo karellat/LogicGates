@@ -47,7 +47,7 @@ Workbench::Workbench(size_t inputSize, size_t outputSize, streambuf* log,bool lo
 	
 	
 }
-//DEBUG METHODS 
+//DEBUG METHODS e d
 //List all names of actual network 
 const unique_ptr<vector<string>> Workbench::ListOfNamedVertex() const
 {
