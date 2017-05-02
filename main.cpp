@@ -18,7 +18,7 @@ bool argumentTest(char* text)
 	return (std::strcmp(text, "-i") == 0) || (std::strcmp(text, "-f") == 0) || (std::strcmp(text, "-h") == 0) || (std::strcmp(text, "-d") == 0) || (std::strcmp(text, "-a") == 0);
 }
 
-vector<bool> stringToBools(string text)
+vector<bool> stringToBools(const string& text)
 {
 	vector<bool> o; 
 	for_each(text.begin(),text.end(), [&o] (char c)
