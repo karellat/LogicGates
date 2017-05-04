@@ -131,7 +131,7 @@ Obsahuje následující šablonové třídy s typovými parametry VertexValue, E
 \item vector<etype *> edges\_to(vtype* a) => vrátí seznam hran do vrcholu a 
 \item unordered\_set<vtype *> verticies\_from(vtype* a) => vrátí seznam vrcholů dosažitelných z a 
 \item bool cycle\_detection() => testuje, zda daný graf obsahuje cyklus,  implementováno DFS, které pokud se vrátí do už uzavřeného vrcholu nahlásí nalezení cyklu
-\item bool all\_vertices\_available\_from(vector<vtype*> from) => testuje, zda z daných vrcholů je dosažitelný celý graf, pomocí DFS projde graf. Pokud počet uzavřených vrcholů není shodný s velikostí grafu zahlásí false
+\item bool all\_vertices\_available\_from(const vector<vtype*>\& from) => testuje, zda z daných vrcholů je dosažitelný celý graf, pomocí DFS projde graf. Pokud počet uzavřených vrcholů není shodný s velikostí grafu zahlásí false
 \end{itemize} 
 \end{itemize} 
 \subsection*{gates} 
@@ -140,22 +140,17 @@ Obsahuje následující šablonové třídy s typovými parametry VertexValue, E
 \item třída Signal - obsahuje proměnné : toID, fromID - pořadí pinů u vstupního a výstupního hradla a Status aktuální nastavení signálu 
 \item abstraktní třída Gate - 
 \begin{itemize} 
-\item obsahuje vlastnosti velikost vstupu, výstupu, název, id - unikátní číslo, result - pravdivý, když jsou nastaveny výstupy, resultValues - hodnota výstupů
+\item obsahuje vlastnosti velikost vstupu, výstupu, název, result - pravdivý, když jsou nastaveny výstupy, resultValues - hodnota výstupů
 \item virtuální metoda Update - spočítá výstup z hradla
 \end{itemize} 
 \item Třídy všech předdefinovaných hradel s přetíženou metodou Update, která počítá jejich logické fce.
 \begin{itemize} 
 \item NOT AND OR XOR NAND NOR XNOR Input Output Blank ConstIn0 ConstIn1 Double
 \end{itemize} 
-\item třídu UserDefinedGateModel - třída uchovávající hradlovou síť sestavenou uživatelem, drží ukazatel na její graf, vstupní a výstupní hradla
+\item třídu UserDefinedGate - třída uchovávající hradlovou síť sestavenou uživatelem, drží ukazatel na její graf, vstupní a výstupní hradla
 \begin{itemize}
 \item metoda Update - nastaví vstupní hradla, simuluje průchod skrz graf hradlovou síť a vrátí hodnoty z výstupních hradel 
-\item metoda getGate - vrací objekt třídy UserDefinedGate, která lze použít v dalších hradlových sítích 
 \end{itemize}
-\item třída UserDefinedGate - třída pro využití v dalších hradlových sítí, ukazuje na UserDefinedGateModel
-\begin{itemize} 
-\item metoda Update volá Update na modelu daného hradla 
-\end{itemize} 
 \end{itemize}
 \newpage
 \subsection*{workbench}
@@ -163,49 +158,65 @@ Obsahuje následující šablonové třídy s typovými parametry VertexValue, E
 \item výčtový typ WorkbenchStatus značící stav workbench  -  UnderConstruction, Constructed, Calculating, Calculated
 \item třídu Workbech
 \begin{itemize} 
-\item obsahuje Graph<Gate,Signal> - která je vlastní hradlovou sítí, ukazatele na modely uživatelsky definovaný hradel, na vstupní/výstupní/constatní hradla, ukazatele na ještě nepřipojená hradla(funkce pro  jejich výpis) 
+\item obsahuje Graph<Gate*,Signal> - která je vlastní hradlovou sítí, ukazatele na modely uživatelsky definovaný hradel, na vstupní/výstupní/constatní hradla, ukazatele na ještě nepřipojená hradla(funkce pro  jejich výpis), vlastní objekty typu Gate jsou uloženy v interním vektoru třídy.
 \item ve stavu konstrukce - jsou k dispozici metody pro přidávání  nových hradel, propojování.
 \begin{itemize}
-\item  bool Connect(const std::size\_t \& freeInputPosition,const std::size\_t \& freeInputID, const std::size\_t \& freeOutputPosition, const std::size\_t \& freeOutputID)\\ => připojí na vstupní pin hradla na freeInputPosition(pozice v listu hradel s volným vstupem) na výstupní pin hradla na freeOutputPosition pozici, *ID - říká číslo pinu 
-\item bool Connect(gvertex from, gvertex to, std::size\_t fromPin, std::size\_t toPin) => spojí vrchol from s vrcholem to na zvolených pinech
-\item gvertex Add(const std::size\_t \& num) => přidá hradlo do sítě, num určuje jaké standartní hradlo přidá podle pořadí ve vektoru StandardGates 
-\item gvertex GetType(string typeName) => přidá hradlo typu podle typeName(název předdefinovaného hradla, či název už nahraného hradla) 
-\item bool GetVertex(string name, gvertex\& v)  => vrátí pojmenovaný(name) vrchol do v, pokud name není jméno žádného vrcholu vrátí false
-\item bool AddNamedGate(string gateName, string typeName) => přidá pojmenovaný vrchol  typu typeName do grafu, pokud už existuje pojmenování vrátí false
-\item bool AddUserDefineGate(const std::size\_t \& positionInList) => přídá do grafu už vytvořené hradlo dle pozice v listu 
-\item 	gvertex AddInputGate()  a vertex AddOutputGate() =>  přidá vstupní či výstupní hradlo 
+\item  void Add(const std::string\& name, const std::string\& typeName) => přidá na workbench nové hradlo s daným jménem  "name" typu "typeName", kde lze použít předdefinovaná hradla nebo už hradla zkonstruovaná. Pokud už existuje vrchol daného jména(iname) nebo neexistuje jméno typu(utype) vyhodí vyjímku. 
+\item Connect(const std::string\& fromName, std::size\_t fromPin, const std::string\& toName, std::size\_t toPin) => přidá hranu mezi hradlem "fromName" z výstupu "fromPin" do hradla "toName" do vstupu "toPin". Jména hradel z fce Add. Pokud jména vrcholu neexistují vyhodí vyjímku(uname). 
 \end{itemize}  
 \item Pro konstrukci:
 \begin{itemize} 
-\item bool ConstructBench() => Otestuje, zda je hradlová síť korektní. Obsahuje alespoň 1 vstupní a 1 výstupní hradlo, zda nevznikl cykl a zda je hradlo celé dosažitelné. K tomu používá metody graph. Pak se přepne workbench do stavu Constructed. Pokud testy neuspějí vrátí false
+\item void ConstructBench() => Otestuje, zda je hradlová síť korektní. Obsahuje alespoň 1 vstupní a 1 výstupní hradlo, zda nevznikl cykl a zda je hradlo celé dosažitelné. K tomu používá metody graph. Pak se přepne workbench do stavu Constructed. Pokud testy neuspějí vyhodí vyjímku(fpin,npart,dcycle).
 \end{itemize} 
 \item Při úspěšně zkonstruovaném hradle:
 \begin{itemize}
-\item bool SetInput(vector<bool> input) => nastaví vstupní hradla na hodnoty z argumentu, a simuluje průchod sítí v grafu a skončí až budou nastavené všechny výstupní hradla. Vrátí false, pokud je špatný formát vstupních hodnot. 
+\item void SetInput(const vector<bool>\& input) => nastaví vstupní hradla na hodnoty z argumentu, a simuluje průchod sítí v grafu a skončí až budou nastavené všechny výstupní hradla.  
 \item vector<bool> ReadOutput() => vrátí vypočítané výstupy, pokud byla předtím volána fce SetInput(input) 
 \end{itemize}
 \item Konstrukce hradla: 
 \begin{itemize} 
-\item bool ConstructUserGate(string name) =>Zkonstruje z aktuální sítě UserDefinedGateModel, přidá jej do seznamu všech UserDefinedGates, nastaví novému hradlu typ dle name, nakonec zavolá ResetWorkbench(false)
+\item void ConstructUserGate(const string\& name, size\_t newInputSize, size\_t newOutputSize) =>Zkonstruje z aktuální sítě UserDefinedGateModel, přidá jej do seznamu všech UserDefinedGates, nastaví novému hradlu typ dle name. A  zavolá ResetWorkbech s false. Připraví workbench pro další hradlo s danou velikostí vstupu a výstupu.
 \end{itemize} 
 \item Další funkce: 
 \begin{itemize}
-\item  vector<string> ListAllGates(), string GetTestOutput() => výpisové funkce všech aktuálních typů hradel a výpis z testů při konstrukci hradlové sítě
-\item void ResetWorkbench(bool deleteUDG) => smaže aktuální už zkonstruovanou část hradla, pokud deleteUDG smaže i uživatelské typy
+\item  ListOfType(),ListOfNamedVertex, GetTestOutput() => výpisové funkce všech aktuálních typů hradel a výpis z testů při konstrukci hradlové sítě
+\item void ResetWorkbench(bool deleteUDG, size\_t newInputSize, size\_t newOutputSize) => smaže aktuální už zkonstruovanou část hradla, pokud deleteUDG smaže i uživatelské typy. A připraví workbench s danou velikostí vstupů a výstupů.
 \end{itemize} 
+\item Seznam vyjímek: 
+\begin{itemize}
+\item fpin -  Volný pin při konstrukci. 
+\item dcycle - V grafu detekován cyklus 
+\item npart - Nedostupná část hradla ze vstupu nebo konst. hradel.
+\item istat - Workbench se nachází v jiném stavu než vyžaduje vyvolaná akce. 
+\item utype - neexistující typ
+\item itype - typ s tímto jménem už existuje
+\item iname - vrchol  s tímto jménem už existuje 
+\item uname - neexistující jméno vrcholu
+\item opin - už obsazený typ 
+\item isize - nevhodná velikost vstupu či výstupu
+\item iinput - špatný formát vstupu
+\end{itemize} 
+
 \end{itemize} 
 \end{itemize} 
 \subsection*{workbenchTUI} 
 \begin{itemize} 
 \item Tvoří vrstvu mezi uživatelem a workbench. Funguje v několika verzích. Vrací výstup na streambuf output a čte streambuf input  dané při konstrukci objektu.
 \begin{itemize} 
-\item bool ReadFile(string path) => načte hradlo z filu dle struktury konstrukčního souboru, vypisuje jednotlivé fáze čtení, pokud čtení selže vrátí false 
-\item void InteraktiveMode(),void InteraktiveMode(string path) => spustí interaktivní mód, který načte daný soubor, pak umožňuje konstrukci hradla, čtení vstupů a přidávání dalších hradel 
-\item 	void PassiveMode(string path, string inputSettings) => zkonstruuje daný konstrukční soubor, vypočítá výstup podle inputSettings a vypíše výstup. 
+\item void InteraktiveMode(),=> spustí interaktivní mód, který načte daný soubor, pak umožňuje konstrukci hradla, čtení vstupů a přidávání dalších hradel 
+\item 	void PassiveMode(const vector<string>\& filePaths, const vector<vector<bool>>\& inputSet,bool tryAllInputs); => zkonstruuje daný konstrukční soubor, vypočítá výstup podle inputSettings a vypíše výstup. 
 \end{itemize}
 \end{itemize} 
 \subsection*{main}
-Vytváří své workbenchTUI, nastaví input na std::cin a output std::cout, dále parsuje argumenty, dle jejich počtu volá příslušné metody na workbenchTUI.
+Vytváří své workbenchTUI, nastaví input na std::cin a output std::cout, dále parsuje argumenty, dle jejich počtu volá příslušné metody na workbenchTUI. 
+\newpage
+\subsection*{Argumenty aplikace:}
+\begin{itemize} 
+\item -h = vytiskne všechny argumenty. 
+\item -f [file..] = cesty ke konstručkním souborům, které mají být sestaveny v daném pořadí. 
+\item -i [string..] = vstupy pro poslední konstruované hradlo ve stejném formátu jako při Interaktivním módu 
+\item -a = vygeneruje všechny možné vstupy pro  poslední generované hradlo, ignoruje vstupy pro -i
+\end{itemize} 
 
 
 
